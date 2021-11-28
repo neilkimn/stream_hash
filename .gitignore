@@ -6,3 +6,5 @@ xclbin.*
 *v++*
 *.log
 *.csv
+emconfig.json
+krnl
