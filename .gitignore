@@ -1,0 +1,8 @@
+.run/*
+_x/
+_x.*/
+build_dir.*/
+xclbin.*
+*v++*
+*.log
+*.csv
