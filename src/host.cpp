@@ -2,6 +2,8 @@
 #include <iostream>
 #include <cstring>
 #include <string>
+#include <vector>
+#include "xcl2.hpp"
 
 // XRT includes
 #include "experimental/xrt_bo.h"
@@ -38,9 +40,112 @@ int main(int argc, char** argv) {
     cout << "Load the xclbin " << binaryFile << endl;
     auto uuid = device.load_xclbin(binaryFile);
 
-    char words[] = "beethoven is the GOAT";
-    int DATA_SIZE = std::strlen(words);
-    int num_words = 4; //TODO: Count num of words -> trim string, count spaces?
+    // Initial stuff
+    int word_size = 16;
+    char word1[2][16] = {"beethoven", "goat"};
+    const double vec1[2][3] = {{0.1, 0.1, 0.1}, {0.2, 0.2, 0.2}};
+    int num_table_words = 2;
+    int vec_len = 3;
+
+    auto store_krnl = xrt::kernel(device, uuid, "store_table");
+
+    // Buffers containing initial stuff
+    // Word buffer: size of word * num of words
+    // Vec buffer: size of vec elems * vec len * num of vecs
+    auto bo_table_words = xrt::bo(device, (sizeof(char) * word_size * num_table_words), store_krnl.group_id(0));
+    auto bo_table_vecs = xrt::bo(device, (sizeof(double) * vec_len * num_table_words), store_krnl.group_id(0)); 
+
+    // Initial buffer types
+    auto bo_table_words_map = bo_table_words.map<char*>();
+    auto bo_table_vecs_map = bo_table_vecs.map<double*>();
+
+    // Filling up initial buffers
+    int vec_idx = 0;
+    for(int i = 0; i < num_table_words; i++){
+      cout << word1[i] << endl;
+      for(int k = 0; k < word_size; k++){
+        bo_table_words_map[(i*word_size)+k] = word1[i][k];
+      }
+      for(int j = 0; j < vec_len; j++){
+        cout << vec_idx << " " << vec1[i][j] << endl;
+        bo_table_vecs_map[vec_idx] = vec1[i][j];
+        vec_idx++;
+      }  
+    }
+
+    // Sync initial buffers to device
+    bo_table_words.sync(XCL_BO_SYNC_BO_TO_DEVICE);
+    bo_table_vecs.sync(XCL_BO_SYNC_BO_TO_DEVICE);
+
+    // Size of 'device only'-side buffers
+    size_t table_words = sizeof(char) * word_size * 65536;
+    size_t table_vecs = sizeof(double) * vec_len * 65536;
+
+    // 'device only'-buffers (HBM 1)
+    auto bo_dev_table_words = xrt::bo(device, table_words, 1);
+    auto bo_dev_table_vecs = xrt::bo(device, table_vecs, 1);
+
+    // 'device only'-buffer types
+    auto bo_dev_table_words_map = bo_dev_table_words.map<char*>();
+    auto bo_dev_table_vecs_map = bo_dev_table_vecs.map<double*>();
+    
+    std::fill(bo_dev_table_vecs_map, bo_dev_table_vecs_map + (65536*vec_len), 0.0);
+    std::fill(bo_dev_table_words_map, bo_dev_table_words_map + (65536*word_size), '\0');
+    
+    auto store_run = xrt::run(store_krnl);
+    store_run.set_arg(0, bo_table_words); // Initial buffer of words
+    store_run.set_arg(1, bo_table_vecs); // Initial buffer of vecs
+
+    store_run.set_arg(2, bo_dev_table_words); // Device-side buffer words
+    store_run.set_arg(3, bo_dev_table_vecs); // Device-side buffer vecs
+
+    store_run.set_arg(4, num_table_words); // Num of words
+    store_run.start();
+    store_run.wait();
+
+    // Fetch device side buffers for sanity check
+    bo_dev_table_vecs.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
+    bo_dev_table_words.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
+
+    // Write-back to gmem buffer
+    //double table_vecs_back[vec_len*65536];
+    //std::fill(table_vecs_back, table_vecs_back + (vec_len*65536), 0.0);
+    //bo_dev_table_vecs.read(table_vecs_back);
+
+
+    // Debugging: Fetching back embedding vectors that have been populated to 'device-only' buffer
+
+    //for(int i = 0; i < (65536*vec_len); i+=3) {
+    //  if(bo_dev_table_vecs_map[i] != 0.0) {
+    //    for(int j = 0; j < 3; j++) {
+    //      cout << i+j << ": read back "<< bo_dev_table_vecs_map[i+j] << endl;  
+    //      //cout << i+j << ": read back "<< table_vecs_back[i+j] << endl;  
+    //    }
+    //  }
+    //}
+
+
+    // Debugging: Fetching back words that have been populated to 'device-only' buffer
+    //            Sanity checking leads to seeing that words get placed at correct positions
+    //            but 'beethoven' is read back at position of 'goat'? Not important for now
+
+    //char table_words_back[word_size*65536];
+    //std::fill(table_words_back, table_words_back + (word_size*65536), '\0');
+    //bo_dev_table_words.read(table_words_back);
+
+    //for(int i = 0; i < (65536*16); i+=16){
+    //  if(table_words_back[i] != '\0'){
+    //    cout << "Found word at: " << i << endl;
+    //    for(int j = 0; j < 16; j++){
+    //    cout << table_words_back[i+j];  
+    //    }  
+    //    cout << "\n";
+    //  }  
+    //}
+    
+    char words[] = "beethoven goat";
+    int num_words = 2; //TODO: Count num of words -> trim string, count spaces?
+    int DATA_SIZE = sizeof(words);
 
     cout << "String: " << words << endl;
     cout << "SIZE: " << DATA_SIZE << endl;
@@ -49,36 +154,25 @@ int main(int argc, char** argv) {
     auto hash_krnl = xrt::kernel(device, uuid, "stream_hash");
     auto mem_write = xrt::kernel(device, uuid, "mem_write");
 
-    //size_t read_bytes = DATA_SIZE;
-    //size_t write_bytes = sizeof(int) * 10;
-    //unsigned int write_buffer[write_bytes];
-    //std::fill(write_buffer, write_buffer + write_bytes, 99);
-
     cout << "Allocate Buffer in Global Memory\n";
     auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
-    auto bo_write = xrt::bo(device, sizeof(unsigned int) * num_words, mem_write.group_id(0));
+    auto bo_write = xrt::bo(device, sizeof(double) * num_words * vec_len, mem_write.group_id(0));
 
     auto read_input = bo_read.map<char*>();
-    auto write_output = bo_write.map<unsigned int*>();
+    auto write_output = bo_write.map<double*>();
 
-    std::fill(write_output, write_output + num_words, 99);
+    std::fill(write_output, write_output + num_words, 0.0);
 
     for(int i = 0; i < DATA_SIZE; i++){
       //cout << words[i] << endl;
       read_input[i] = words[i]; 
     }
 
-    // Map the contents of the buffer object into host memory
-    cout << "Write input data" << endl;
-    //bo_read.write(words);
-
     // Synchronize buffer content with device side
     cout << "synchronize input buffer data to device global memory\n";
     bo_read.sync(XCL_BO_SYNC_BO_TO_DEVICE);
 
     cout << "Execution of the kernel\n";
-    //auto read_run = mem_read(bo0, bo_out, in_size_bytes, num_words);
-    //run.wait();
 
     auto read_run = xrt::run(mem_read);
     read_run.set_arg(0, bo_read);
@@ -86,12 +180,14 @@ int main(int argc, char** argv) {
     read_run.start();
 
     auto dataflow = xrt::run(hash_krnl);
-    dataflow.set_arg(2, DATA_SIZE);
+    dataflow.set_arg(2, bo_dev_table_words);
+    dataflow.set_arg(3, bo_dev_table_vecs);
+    dataflow.set_arg(4, DATA_SIZE);
     dataflow.start();
 
     auto write_run = xrt::run(mem_write);
     write_run.set_arg(0, bo_write);
-    write_run.set_arg(1, num_words);
+    write_run.set_arg(1, num_words*vec_len);
     write_run.start();
 
     //read_run.wait();
@@ -102,15 +198,21 @@ int main(int argc, char** argv) {
     cout << "Get the output data from the device" << endl;
     bo_write.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
     
-    //unsigned int *bufReadBack[2];
-    //std::memcpy(bufReadBack, write_output, write_bytes);
+    //double *bufReadBack[6];
+    //std::memcpy(bufReadBack, write_output, sizeof(unsigned int)*num_words);
 
     //int golden[2] = {883032261, 883032261}; // djb2 hash of string "beethoven"
 
     // Validate our results
     for(int i = 0; i < num_words; i++){
       //cout << "At location: " << i << ": " << &write_output[i] << endl;  
-      cout << "Output: " << write_output[i] << endl;  
+      
+      for(int j = 0; j < vec_len; j++){
+        cout << "Idx: " << (i*vec_len)+j << " Output: " << write_output[(i*vec_len)+j] << endl;  
+        //cout << "Output: " << bufReadBack[i+j] << endl;  
+      }
+      
+      //cout << "Word: " << i << " " << write_output[i] << endl;
     }
     //if(golden == bo_out_buffer) {
     //  cout << "TEST PASSED\n";

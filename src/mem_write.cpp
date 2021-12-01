@@ -2,11 +2,14 @@
 #include <ap_int.h>
 #include <hls_stream.h>
 
+#define DWIDTH 32
+
+typedef ap_axiu<DWIDTH, 0, 0, 0> pkt;
+
 extern "C" {
-void mem_write(unsigned int* mem, int size, hls::stream<unsigned int>& stream) {
+void mem_write(double* mem, int size, hls::stream<double>& stream) {
     for (int i = 0; i < size; i++) {
-        //ap_axiu<32, 0, 0, 0> v = stream.read();
-        //mem[i] = v.data;
+        //pkt v2 = stream.read();
         mem[i] = stream.read();
     }
 }

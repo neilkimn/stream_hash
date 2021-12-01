@@ -89,7 +89,8 @@ endif
 #Include Required Host Source Files
 CXXFLAGS += -I$(XF_PROJ_ROOT)/common/includes/cmdparser
 CXXFLAGS += -I$(XF_PROJ_ROOT)/common/includes/logger
-HOST_SRCS += $(XF_PROJ_ROOT)/common/includes/cmdparser/cmdlineparser.cpp $(XF_PROJ_ROOT)/common/includes/logger/logger.cpp ./src/host.cpp 
+CXXFLAGS += -I$(XF_PROJ_ROOT)/common/includes/xcl2
+HOST_SRCS += $(XF_PROJ_ROOT)/common/includes/cmdparser/cmdlineparser.cpp $(XF_PROJ_ROOT)/common/includes/logger/logger.cpp $(XF_PROJ_ROOT)/common/includes/xcl2/xcl2.cpp ./src/host.cpp 
 # Host compiler global settings
 CXXFLAGS += -fmessage-length=0
 LDFLAGS += -lrt -lstdc++ 
@@ -113,6 +114,7 @@ EMCONFIG_DIR = $(TEMP_DIR)
 BINARY_CONTAINERS += $(BUILD_DIR)/krnl.xclbin
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/mem_read.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/stream_hash.xo
+BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/store_table.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/mem_write.xo
 
 ############################## Setting Targets ##############################
@@ -134,6 +136,9 @@ xclbin: build
 $(TEMP_DIR)/stream_hash.xo: src/stream_hash.cpp
 	mkdir -p $(TEMP_DIR)
 	$(VPP) $(VPP_FLAGS) -c -k stream_hash --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
+$(TEMP_DIR)/store_table.xo: src/store_table.cpp
+	mkdir -p $(TEMP_DIR)
+	$(VPP) $(VPP_FLAGS) -c -k store_table --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
 $(TEMP_DIR)/mem_read.xo: src/mem_read.cpp
 	mkdir -p $(TEMP_DIR)
 	$(VPP) $(VPP_FLAGS) -c -k mem_read --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'

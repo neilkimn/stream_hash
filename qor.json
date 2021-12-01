@@ -20,6 +20,10 @@
                             "PipelineII": "1"
                         }, 
                         {
+                            "name": "exec", 
+                            "PipelineII": "1"
+                        }, 
+                        {
                             "name": "mem_wr", 
                             "PipelineII": "1"
                         }
