@@ -6,5 +6,7 @@ xclbin.*
 *v++*
 *.log
 *.csv
+*.swp
+src/*.swp
 emconfig.json
 krnl
