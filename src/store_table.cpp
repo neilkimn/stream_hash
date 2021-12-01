@@ -2,7 +2,6 @@
 #include <hls_stream.h>
 #include <string.h>
 #include <vector>
-#include <embedding.h>
 
 void krnl_cpy_from(char* target, char* source, int offset, size_t SIZE){
 krnl_cpy_from:
@@ -46,7 +45,7 @@ extern "C" {
       unsigned int word_idx = hashFunction(cur_word, sz);
 
       int offset = ((word_idx % 65536)*sz);
-      krnl_cpy_to(dev_words, words, offset, sz);
+      krnl_cpy_to(dev_words, cur_word, offset, sz);
       for(int j = 0; j < vec_len; j++) {
         dev_vecs[((word_idx % 65536)*vec_len)+j] = vecs[idx];
         idx++;

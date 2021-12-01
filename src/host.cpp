@@ -11,6 +11,9 @@
 #include "experimental/xrt_kernel.h"
 
 //#define DATA_SIZE 4096
+#define TABLE_WORDS 3
+#define VEC_LEN 3
+#define WORD_LEN 16
 
 using std::cout;
 using std::endl;
@@ -41,11 +44,11 @@ int main(int argc, char** argv) {
     auto uuid = device.load_xclbin(binaryFile);
 
     // Initial stuff
-    int word_size = 16;
-    char word1[2][16] = {"beethoven", "goat"};
-    const double vec1[2][3] = {{0.1, 0.1, 0.1}, {0.2, 0.2, 0.2}};
-    int num_table_words = 2;
-    int vec_len = 3;
+    int word_size = WORD_LEN;
+    char word1[TABLE_WORDS][WORD_LEN] = {"beethoven", "goat", "dagestan"};
+    const double vec1[TABLE_WORDS][VEC_LEN] = {{0.1, 0.1, 0.1}, {0.2, 0.2, 0.2}, {0.3, 0.3, 0.3}};
+    int num_table_words = TABLE_WORDS;
+    int vec_len = VEC_LEN;
 
     auto store_krnl = xrt::kernel(device, uuid, "store_table");
 
@@ -143,8 +146,9 @@ int main(int argc, char** argv) {
     //  }  
     //}
     
-    char words[] = "beethoven goat";
-    int num_words = 2; //TODO: Count num of words -> trim string, count spaces?
+    char words[] = "beethoven goat dagestan jpm";
+    //char words[] = "beethoven goat dagestan";
+    int num_words = 4; //TODO: Count num of words -> trim string, count spaces?
     int DATA_SIZE = sizeof(words);
 
     cout << "String: " << words << endl;
