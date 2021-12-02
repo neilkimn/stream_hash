@@ -7,7 +7,7 @@
 typedef ap_axiu<DWIDTH, 0, 0, 0> pkt;
 
 extern "C" {
-void mem_write(double* mem, int size, hls::stream<double>& stream) {
+void mem_write(float* mem, int size, hls::stream<float>& stream) {
     for (int i = 0; i < size; i++) {
         //pkt v2 = stream.read();
         mem[i] = stream.read();

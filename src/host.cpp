@@ -10,7 +10,6 @@
 #include "experimental/xrt_device.h"
 #include "experimental/xrt_kernel.h"
 
-//#define DATA_SIZE 4096
 #define TABLE_WORDS 3
 #define VEC_LEN 3
 #define WORD_LEN 16
@@ -46,7 +45,7 @@ int main(int argc, char** argv) {
     // Initial stuff
     int word_size = WORD_LEN;
     char word1[TABLE_WORDS][WORD_LEN] = {"beethoven", "goat", "dagestan"};
-    const double vec1[TABLE_WORDS][VEC_LEN] = {{0.1, 0.1, 0.1}, {0.2, 0.2, 0.2}, {0.3, 0.3, 0.3}};
+    const float vec1[TABLE_WORDS][VEC_LEN] = {{0.1f, 0.1f, 0.1f}, {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}};
     int num_table_words = TABLE_WORDS;
     int vec_len = VEC_LEN;
 
@@ -56,16 +55,16 @@ int main(int argc, char** argv) {
     // Word buffer: size of word * num of words
     // Vec buffer: size of vec elems * vec len * num of vecs
     auto bo_table_words = xrt::bo(device, (sizeof(char) * word_size * num_table_words), store_krnl.group_id(0));
-    auto bo_table_vecs = xrt::bo(device, (sizeof(double) * vec_len * num_table_words), store_krnl.group_id(0)); 
+    auto bo_table_vecs = xrt::bo(device, (sizeof(float) * vec_len * num_table_words), store_krnl.group_id(0)); 
 
     // Initial buffer types
     auto bo_table_words_map = bo_table_words.map<char*>();
-    auto bo_table_vecs_map = bo_table_vecs.map<double*>();
+    auto bo_table_vecs_map = bo_table_vecs.map<float*>();
 
     // Filling up initial buffers
     int vec_idx = 0;
     for(int i = 0; i < num_table_words; i++){
-      cout << word1[i] << endl;
+      cout << "Store vector for word: " << word1[i] << endl;
       for(int k = 0; k < word_size; k++){
         bo_table_words_map[(i*word_size)+k] = word1[i][k];
       }
@@ -82,7 +81,7 @@ int main(int argc, char** argv) {
 
     // Size of 'device only'-side buffers
     size_t table_words = sizeof(char) * word_size * 65536;
-    size_t table_vecs = sizeof(double) * vec_len * 65536;
+    size_t table_vecs = sizeof(float) * vec_len * 65536;
 
     // 'device only'-buffers (HBM 1)
     auto bo_dev_table_words = xrt::bo(device, table_words, 1);
@@ -90,7 +89,7 @@ int main(int argc, char** argv) {
 
     // 'device only'-buffer types
     auto bo_dev_table_words_map = bo_dev_table_words.map<char*>();
-    auto bo_dev_table_vecs_map = bo_dev_table_vecs.map<double*>();
+    auto bo_dev_table_vecs_map = bo_dev_table_vecs.map<float*>();
     
     std::fill(bo_dev_table_vecs_map, bo_dev_table_vecs_map + (65536*vec_len), 0.0);
     std::fill(bo_dev_table_words_map, bo_dev_table_words_map + (65536*word_size), '\0');
@@ -160,12 +159,12 @@ int main(int argc, char** argv) {
 
     cout << "Allocate Buffer in Global Memory\n";
     auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
-    auto bo_write = xrt::bo(device, sizeof(double) * num_words * vec_len, mem_write.group_id(0));
+    auto bo_write = xrt::bo(device, sizeof(float) * num_words * vec_len, mem_write.group_id(0));
 
     auto read_input = bo_read.map<char*>();
-    auto write_output = bo_write.map<double*>();
+    auto write_output = bo_write.map<float*>();
 
-    std::fill(write_output, write_output + num_words, 0.0);
+    std::fill(write_output, write_output + num_words, 0.0f);
 
     for(int i = 0; i < DATA_SIZE; i++){
       //cout << words[i] << endl;
@@ -210,7 +209,6 @@ int main(int argc, char** argv) {
     // Validate our results
     for(int i = 0; i < num_words; i++){
       //cout << "At location: " << i << ": " << &write_output[i] << endl;  
-      
       for(int j = 0; j < vec_len; j++){
         cout << "Idx: " << (i*vec_len)+j << " Output: " << write_output[(i*vec_len)+j] << endl;  
         //cout << "Output: " << bufReadBack[i+j] << endl;  

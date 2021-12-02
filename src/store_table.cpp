@@ -3,6 +3,9 @@
 #include <string.h>
 #include <vector>
 
+#define WORD_LEN 16
+#define VEC_LEN 3
+
 void krnl_cpy_from(char* target, char* source, int offset, size_t SIZE){
 krnl_cpy_from:
   for (int i = 0; i < SIZE; i++) {
@@ -17,9 +20,9 @@ krnl_cpy_to:
   }
 }
 
-unsigned int hashFunction(char* word, size_t size){
+unsigned int hashFunction(char* word, size_t SIZE){
     unsigned long hash = 5381;
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < SIZE; i++) {
         if(word[i] == '\0'){
           return (unsigned int)hash;
         } else {
@@ -31,23 +34,21 @@ unsigned int hashFunction(char* word, size_t size){
 
 extern "C" {
   void store_table(char* words,
-                   double* vecs,
+                   float* vecs,
                    char* dev_words,
-                   double* dev_vecs,
+                   float* dev_vecs,
                    int size) {
 
-    int vec_len = 3;
     int idx = 0;
     for(int i = 0; i < size; i++) {
-      size_t sz = 16;
-      char cur_word[16];
-      krnl_cpy_from(cur_word, words, (i*sz), sz);
-      unsigned int word_idx = hashFunction(cur_word, sz);
+      char cur_word[WORD_LEN];
+      krnl_cpy_from(cur_word, words, (i*WORD_LEN), WORD_LEN);
+      unsigned int word_idx = hashFunction(cur_word, WORD_LEN);
 
-      int offset = ((word_idx % 65536)*sz);
-      krnl_cpy_to(dev_words, cur_word, offset, sz);
-      for(int j = 0; j < vec_len; j++) {
-        dev_vecs[((word_idx % 65536)*vec_len)+j] = vecs[idx];
+      int offset = ((word_idx % 65536)*WORD_LEN);
+      krnl_cpy_to(dev_words, cur_word, offset, WORD_LEN);
+      for(int j = 0; j < VEC_LEN; j++) {
+        dev_vecs[((word_idx % 65536)*VEC_LEN)+j] = vecs[idx];
         idx++;
       }
     }
