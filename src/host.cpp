@@ -1,5 +1,7 @@
 #include "cmdlineparser.h"
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -17,6 +19,43 @@
 using std::cout;
 using std::endl;
 
+bool getFileContent(std::string fileName, char allWords[][16], float allEmbeddings[][3])
+{
+    std::ifstream in(fileName.c_str());
+    
+    if(!in){
+        std::cerr << "Cannot open File: "<<fileName<<std::endl;
+        return false;
+    }
+
+    std::string str;
+    int word_cnt = 0;
+ 
+    while (getline(in, str) && word_cnt < TABLE_WORDS){
+      std::istringstream iss(str);
+      std::string key;
+      
+      float val;
+      static float emb_vector[3];
+
+      iss >> key;
+      int cnt = 0;
+      while ((iss.peek() != '\n') && (iss>>val)) {
+        if(cnt > 3){
+          break;
+        }
+        
+        emb_vector[cnt] = val;
+        cnt++;
+      }
+
+      strncpy(allWords[word_cnt], key.c_str(), sizeof(allWords[word_cnt]));
+      memcpy(&allEmbeddings[word_cnt], emb_vector, sizeof(double)*3);
+      word_cnt ++;
+    }
+    in.close();
+    return true;
+}
 
 int main(int argc, char** argv) {
     // Command Line Parser
@@ -43,9 +82,30 @@ int main(int argc, char** argv) {
     auto uuid = device.load_xclbin(binaryFile);
 
     // Initial stuff
+    char word1[TABLE_WORDS][WORD_LEN] = {{0}};
+    float vec1[TABLE_WORDS][VEC_LEN] = {{0}};
+
+    // Reading in embeddings
+    bool result = getFileContent("data/test_most_frequent_embeddings.dat", word1, vec1);
+
+    for(int i = 0; i < TABLE_WORDS; i++){
+      for(int j = 0; j < WORD_LEN; j++){
+        std::cout << word1[i][j] << std::endl;  
+      }
+    }
+    for(int i = 0; i < TABLE_WORDS; i++){
+      for(int j = 0; j < VEC_LEN; j++){
+        std::cout << vec1[i][j] << std::endl;  
+      }
+    }
+
+
+    //char **word1 = &allWords[0];
+    //float **vec1 = &allEmbeddings[0];
+
     int word_size = WORD_LEN;
-    char word1[TABLE_WORDS][WORD_LEN] = {"beethoven", "goat", "dagestan"};
-    const float vec1[TABLE_WORDS][VEC_LEN] = {{0.1f, 0.1f, 0.1f}, {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}};
+    //char word1[TABLE_WORDS][WORD_LEN] = {"beethoven", "goat", "dagestan"};
+    //const float vec1[TABLE_WORDS][VEC_LEN] = {{0.1f, 0.1f, 0.1f}, {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}};
     int num_table_words = TABLE_WORDS;
     int vec_len = VEC_LEN;
 
@@ -66,7 +126,9 @@ int main(int argc, char** argv) {
     for(int i = 0; i < num_table_words; i++){
       cout << "Store vector for word: " << word1[i] << endl;
       for(int k = 0; k < word_size; k++){
-        bo_table_words_map[(i*word_size)+k] = word1[i][k];
+        if((word1[i][k] != ' ') || (word1[i][k] != '\0')){
+          bo_table_words_map[(i*word_size)+k] = word1[i][k];
+        }
       }
       for(int j = 0; j < vec_len; j++){
         cout << vec_idx << " " << vec1[i][j] << endl;
@@ -109,48 +171,22 @@ int main(int argc, char** argv) {
     bo_dev_table_vecs.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
     bo_dev_table_words.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
 
-    // Write-back to gmem buffer
-    //double table_vecs_back[vec_len*65536];
-    //std::fill(table_vecs_back, table_vecs_back + (vec_len*65536), 0.0);
-    //bo_dev_table_vecs.read(table_vecs_back);
-
-
-    // Debugging: Fetching back embedding vectors that have been populated to 'device-only' buffer
-
-    //for(int i = 0; i < (65536*vec_len); i+=3) {
-    //  if(bo_dev_table_vecs_map[i] != 0.0) {
-    //    for(int j = 0; j < 3; j++) {
-    //      cout << i+j << ": read back "<< bo_dev_table_vecs_map[i+j] << endl;  
-    //      //cout << i+j << ": read back "<< table_vecs_back[i+j] << endl;  
-    //    }
-    //  }
-    //}
-
-
-    // Debugging: Fetching back words that have been populated to 'device-only' buffer
-    //            Sanity checking leads to seeing that words get placed at correct positions
-    //            but 'beethoven' is read back at position of 'goat'? Not important for now
-
-    //char table_words_back[word_size*65536];
-    //std::fill(table_words_back, table_words_back + (word_size*65536), '\0');
-    //bo_dev_table_words.read(table_words_back);
-
-    //for(int i = 0; i < (65536*16); i+=16){
-    //  if(table_words_back[i] != '\0'){
-    //    cout << "Found word at: " << i << endl;
-    //    for(int j = 0; j < 16; j++){
-    //    cout << table_words_back[i+j];  
-    //    }  
-    //    cout << "\n";
-    //  }  
-    //}
+    for(int i = 0; i < (word_size * 65536); i++){
+      if(bo_dev_table_words_map[i] != '\0'){
+        cout << "Word Idx: " << i << ": " << bo_dev_table_words_map[i] << endl;  
+      }  
+    }
+    for(int i = 0; i < (vec_len * 65536); i++){
+      if(bo_dev_table_vecs_map[i] != '\0'){
+        cout << "Vec Idx: " << i << ": " << bo_dev_table_vecs_map[i] << endl;  
+      }  
+    }
     
-    char words[] = "beethoven goat dagestan jpm";
-    //char words[] = "beethoven goat dagestan";
-    int num_words = 4; //TODO: Count num of words -> trim string, count spaces?
-    int DATA_SIZE = sizeof(words);
+    char query_words[] = "beethoven the goat dagestan jpm";
+    int num_words = 5; //TODO: Count num of words -> trim string, count spaces?
+    int DATA_SIZE = sizeof(query_words);
 
-    cout << "String: " << words << endl;
+    cout << "String: " << query_words << endl;
     cout << "SIZE: " << DATA_SIZE << endl;
 
     auto mem_read = xrt::kernel(device, uuid, "mem_read");
@@ -168,7 +204,7 @@ int main(int argc, char** argv) {
 
     for(int i = 0; i < DATA_SIZE; i++){
       //cout << words[i] << endl;
-      read_input[i] = words[i]; 
+      read_input[i] = query_words[i]; 
     }
 
     // Synchronize buffer content with device side

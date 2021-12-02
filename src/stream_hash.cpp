@@ -53,6 +53,9 @@ extern "C" {
         for(int j = 0; j < VEC_LEN; j++){
           outStream.write(9.9);
         }
+        memset(&word[0], 0, WORD_LEN);
+        cnt = 0;
+        hash = 5381;
       } else {
         float* vec_vals = get_vec(vec_idx, dev_vecs);
         for(int j = 0; j < VEC_LEN; j++) {
@@ -72,10 +75,9 @@ extern "C" {
   
   unsigned int vec_idx = (hash % 65536)*VEC_LEN;
   unsigned int word_idx = (hash % 65536)*WORD_LEN;
-
   if(krnl_cmp(word, dev_words, word_idx, cnt) == 1){
     for(int j = 0; j < VEC_LEN; j++){
-      outStream.write(9.9);  
+      outStream.write(9.9);
     }
   } else {
     float* last_vec_vals = get_vec(vec_idx, dev_vecs);
