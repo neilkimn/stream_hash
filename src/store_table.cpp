@@ -16,7 +16,16 @@ krnl_cpy_from:
 void krnl_cpy_to(char* target, char* source, int offset, size_t SIZE){
 krnl_cpy_to:
   for (int i = 0; i < SIZE; i++) {
-    target[i+offset] = source[i];
+      target[i+offset] = source[i];
+  }
+}
+
+void krnl_cpy_to_collision(char* target, char* source, int offset, size_t SIZE){
+krnl_cpy_to_collision:
+  for (int i = 0; i < SIZE; i++) {
+    if(target[i+offset] == '\0'){
+      target[i+offset] = source[i];
+    }
   }
 }
 

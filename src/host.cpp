@@ -12,14 +12,14 @@
 #include "experimental/xrt_device.h"
 #include "experimental/xrt_kernel.h"
 
-#define TABLE_WORDS 3
+#define TABLE_WORDS 20000
 #define VEC_LEN 3
 #define WORD_LEN 16
 
 using std::cout;
 using std::endl;
 
-bool getFileContent(std::string fileName, char allWords[][16], float allEmbeddings[][3])
+bool getFileContent(std::string fileName, char allWords[][WORD_LEN], float allEmbeddings[][VEC_LEN])
 {
     std::ifstream in(fileName.c_str());
     
@@ -36,12 +36,12 @@ bool getFileContent(std::string fileName, char allWords[][16], float allEmbeddin
       std::string key;
       
       float val;
-      static float emb_vector[3];
+      static float emb_vector[VEC_LEN];
 
       iss >> key;
       int cnt = 0;
       while ((iss.peek() != '\n') && (iss>>val)) {
-        if(cnt > 3){
+        if(cnt > VEC_LEN){
           break;
         }
         
@@ -50,7 +50,7 @@ bool getFileContent(std::string fileName, char allWords[][16], float allEmbeddin
       }
 
       strncpy(allWords[word_cnt], key.c_str(), sizeof(allWords[word_cnt]));
-      memcpy(&allEmbeddings[word_cnt], emb_vector, sizeof(double)*3);
+      memcpy(&allEmbeddings[word_cnt], emb_vector, sizeof(double)*VEC_LEN);
       word_cnt ++;
     }
     in.close();
@@ -100,12 +100,7 @@ int main(int argc, char** argv) {
     }
 
 
-    //char **word1 = &allWords[0];
-    //float **vec1 = &allEmbeddings[0];
-
     int word_size = WORD_LEN;
-    //char word1[TABLE_WORDS][WORD_LEN] = {"beethoven", "goat", "dagestan"};
-    //const float vec1[TABLE_WORDS][VEC_LEN] = {{0.1f, 0.1f, 0.1f}, {0.2f, 0.2f, 0.2f}, {0.3f, 0.3f, 0.3f}};
     int num_table_words = TABLE_WORDS;
     int vec_len = VEC_LEN;
 
@@ -131,7 +126,6 @@ int main(int argc, char** argv) {
         }
       }
       for(int j = 0; j < vec_len; j++){
-        cout << vec_idx << " " << vec1[i][j] << endl;
         bo_table_vecs_map[vec_idx] = vec1[i][j];
         vec_idx++;
       }  
@@ -165,13 +159,12 @@ int main(int argc, char** argv) {
 
     store_run.set_arg(4, num_table_words); // Num of words
     store_run.start();
-    store_run.wait();
-
+    store_run.wait(1000);
     // Fetch device side buffers for sanity check
-    bo_dev_table_vecs.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
-    bo_dev_table_words.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
-
-    for(int i = 0; i < (word_size * 65536); i++){
+    //bo_dev_table_vecs.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
+    //bo_dev_table_words.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
+    
+    /* for(int i = 0; i < (word_size * 65536); i++){
       if(bo_dev_table_words_map[i] != '\0'){
         cout << "Word Idx: " << i << ": " << bo_dev_table_words_map[i] << endl;  
       }  
@@ -180,7 +173,7 @@ int main(int argc, char** argv) {
       if(bo_dev_table_vecs_map[i] != '\0'){
         cout << "Vec Idx: " << i << ": " << bo_dev_table_vecs_map[i] << endl;  
       }  
-    }
+    }*/
     
     char query_words[] = "beethoven the goat dagestan jpm";
     int num_words = 5; //TODO: Count num of words -> trim string, count spaces?
@@ -203,7 +196,6 @@ int main(int argc, char** argv) {
     std::fill(write_output, write_output + num_words, 0.0f);
 
     for(int i = 0; i < DATA_SIZE; i++){
-      //cout << words[i] << endl;
       read_input[i] = query_words[i]; 
     }
 
@@ -237,24 +229,12 @@ int main(int argc, char** argv) {
     cout << "Get the output data from the device" << endl;
     bo_write.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
     
-    //double *bufReadBack[6];
-    //std::memcpy(bufReadBack, write_output, sizeof(unsigned int)*num_words);
-
-    //int golden[2] = {883032261, 883032261}; // djb2 hash of string "beethoven"
-
     // Validate our results
+    // TODO: Add test
     for(int i = 0; i < num_words; i++){
-      //cout << "At location: " << i << ": " << &write_output[i] << endl;  
       for(int j = 0; j < vec_len; j++){
         cout << "Idx: " << (i*vec_len)+j << " Output: " << write_output[(i*vec_len)+j] << endl;  
-        //cout << "Output: " << bufReadBack[i+j] << endl;  
       }
-      
-      //cout << "Word: " << i << " " << write_output[i] << endl;
     }
-    //if(golden == bo_out_buffer) {
-    //  cout << "TEST PASSED\n";
-    //}
     return 0;
 }
-
