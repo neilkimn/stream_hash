@@ -12,7 +12,7 @@
 #include "experimental/xrt_device.h"
 #include "experimental/xrt_kernel.h"
 
-#define TABLE_WORDS 20000
+#define TABLE_WORDS 100
 #define VEC_LEN 3
 #define WORD_LEN 16
 
@@ -87,6 +87,9 @@ int main(int argc, char** argv) {
 
     // Reading in embeddings
     bool result = getFileContent("data/test_most_frequent_embeddings.dat", word1, vec1);
+    if(result != true){
+      throw std::invalid_argument("could not read data file containing embeddings");  
+    }
 
     for(int i = 0; i < TABLE_WORDS; i++){
       for(int j = 0; j < WORD_LEN; j++){

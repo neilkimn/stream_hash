@@ -10,3 +10,4 @@ xclbin.*
 src/*.swp
 emconfig.json
 krnl
+rtl_krnl/*
