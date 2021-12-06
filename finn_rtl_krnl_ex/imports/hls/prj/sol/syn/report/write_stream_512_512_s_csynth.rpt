@@ -1,0 +1,130 @@
+
+
+================================================================
+== Vivado HLS Report for 'write_stream_512_512_s'
+================================================================
+* Date:           Sun Dec  5 19:08:57 2021
+
+* Version:        2020.1 (Build 2897737 on Wed May 27 20:21:37 MDT 2020)
+* Project:        prj
+* Solution:       sol
+* Product family: virtexuplus
+* Target device:  xcu280-fsvh2892-2L-e
+
+
+================================================================
+== Performance Estimates
+================================================================
++ Timing: 
+    * Summary: 
+    +--------+----------+----------+------------+
+    |  Clock |  Target  | Estimated| Uncertainty|
+    +--------+----------+----------+------------+
+    |ap_clk  | 10.00 ns |   0 ns   |   1.25 ns  |
+    +--------+----------+----------+------------+
+
++ Latency: 
+    * Summary: 
+    +---------+---------+----------+----------+-----+-----+----------+
+    |  Latency (cycles) |  Latency (absolute) |  Interval | Pipeline |
+    |   min   |   max   |    min   |    max   | min | max |   Type   |
+    +---------+---------+----------+----------+-----+-----+----------+
+    |        0|        0|   0 ns   |   0 ns   |    1|    1| function |
+    +---------+---------+----------+----------+-----+-----+----------+
+
+    + Detail: 
+        * Instance: 
+        N/A
+
+        * Loop: 
+        N/A
+
+
+
+================================================================
+== Utilization Estimates
+================================================================
+* Summary: 
++---------------------+---------+-------+---------+---------+-----+
+|         Name        | BRAM_18K| DSP48E|    FF   |   LUT   | URAM|
++---------------------+---------+-------+---------+---------+-----+
+|DSP                  |        -|      -|        -|        -|    -|
+|Expression           |        -|      -|        -|        -|    -|
+|FIFO                 |        -|      -|        -|        -|    -|
+|Instance             |        -|      -|        -|        -|    -|
+|Memory               |        -|      -|        -|        -|    -|
+|Multiplexer          |        -|      -|        -|        9|    -|
+|Register             |        -|      -|        1|        -|    -|
++---------------------+---------+-------+---------+---------+-----+
+|Total                |        0|      0|        1|        9|    0|
++---------------------+---------+-------+---------+---------+-----+
+|Available SLR        |     1344|   3008|   869120|   434560|  320|
++---------------------+---------+-------+---------+---------+-----+
+|Utilization SLR (%)  |        0|      0|    ~0   |    ~0   |    0|
++---------------------+---------+-------+---------+---------+-----+
+|Available            |     4032|   9024|  2607360|  1303680|  960|
++---------------------+---------+-------+---------+---------+-----+
+|Utilization (%)      |        0|      0|    ~0   |    ~0   |    0|
++---------------------+---------+-------+---------+---------+-----+
+
++ Detail: 
+    * Instance: 
+    N/A
+
+    * DSP48E: 
+    N/A
+
+    * Memory: 
+    N/A
+
+    * FIFO: 
+    N/A
+
+    * Expression: 
+    N/A
+
+    * Multiplexer: 
+    +--------------------+----+-----------+-----+-----------+
+    |        Name        | LUT| Input Size| Bits| Total Bits|
+    +--------------------+----+-----------+-----+-----------+
+    |axis00_TDATA_blk_n  |   9|          2|    1|          2|
+    +--------------------+----+-----------+-----+-----------+
+    |Total               |   9|          2|    1|          2|
+    +--------------------+----+-----------+-----+-----------+
+
+    * Register: 
+    +-----------+---+----+-----+-----------+
+    |    Name   | FF| LUT| Bits| Const Bits|
+    +-----------+---+----+-----+-----------+
+    |ap_CS_fsm  |  1|   0|    1|          0|
+    +-----------+---+----+-----+-----------+
+    |Total      |  1|   0|    1|          0|
+    +-----------+---+----+-----+-----------+
+
+
+
+================================================================
+== Interface
+================================================================
+* Summary: 
++--------------------+-----+-----+------------+------------------------+--------------+
+|      RTL Ports     | Dir | Bits|  Protocol  |      Source Object     |    C Type    |
++--------------------+-----+-----+------------+------------------------+--------------+
+|ap_clk              |  in |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|ap_rst              |  in |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|ap_start            |  in |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|ap_done             | out |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|ap_idle             | out |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|ap_ready            | out |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|axis00_TDATA_blk_n  | out |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|ap_ce               |  in |    1| ap_ctrl_hs | write_stream<512, 512> | return value |
+|acc_data_V_read     |  in |  512|   ap_none  |     acc_data_V_read    |    scalar    |
+|acc_keep_V_read     |  in |   64|   ap_none  |     acc_keep_V_read    |    scalar    |
+|acc_last_V_read     |  in |    1|   ap_none  |     acc_last_V_read    |    scalar    |
+|axis00_TDATA        | out |  512|    axis    |     m_axis_V_data_V    |    pointer   |
+|axis00_TREADY       |  in |    1|    axis    |     m_axis_V_data_V    |    pointer   |
+|axis00_TVALID       | out |    1|    axis    |     m_axis_V_last_V    |    pointer   |
+|axis00_TLAST        | out |    1|    axis    |     m_axis_V_last_V    |    pointer   |
+|axis00_TKEEP        | out |   64|    axis    |     m_axis_V_keep_V    |    pointer   |
++--------------------+-----+-----+------------+------------------------+--------------+
+
