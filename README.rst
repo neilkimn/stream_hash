@@ -31,6 +31,8 @@ Once the environment has been configured, the application can be built and run b
 
 Subsequent changes to the host file can be made without requiring to rebuild the entire application allowing for quick debugging (assuming the kernels are written correctly). 
 
+The FINN kernel takes, as input, a 200x50 dimensional matrix for inference. The dimensions signify that a string of at most 200 words be converted to their corresponding vectors of length 50, of type float32. The host file contains a hard-coded string with randomly sampled words from the embeddings vocab. The file, :code:`data/embeddings_small_50.dat` contain the corresponding embedding vectors for the hard-coded example string. Due to hardware emulation being slow (in real time), this is a feasible approach to test functionality.
+
 TODO
 ----
 

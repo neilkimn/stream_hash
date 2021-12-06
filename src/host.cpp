@@ -12,8 +12,8 @@
 #include "experimental/xrt_device.h"
 #include "experimental/xrt_kernel.h"
 
-#define TABLE_WORDS 100
-#define VEC_LEN 3
+#define TABLE_WORDS 200
+#define VEC_LEN 50
 #define WORD_LEN 16
 
 using std::cout;
@@ -86,20 +86,22 @@ int main(int argc, char** argv) {
     float vec1[TABLE_WORDS][VEC_LEN] = {{0}};
 
     // Reading in embeddings
-    bool result = getFileContent("data/test_most_frequent_embeddings.dat", word1, vec1);
+    bool result = getFileContent("data/embeddings_small_50.dat", word1, vec1);
     if(result != true){
       throw std::invalid_argument("could not read data file containing embeddings");  
     }
 
     for(int i = 0; i < TABLE_WORDS; i++){
       for(int j = 0; j < WORD_LEN; j++){
-        std::cout << word1[i][j] << std::endl;  
+        std::cout << word1[i][j]; 
       }
+      std::cout << std::endl;
     }
     for(int i = 0; i < TABLE_WORDS; i++){
       for(int j = 0; j < VEC_LEN; j++){
-        std::cout << vec1[i][j] << std::endl;  
+        std::cout << vec1[i][j];  
       }
+      std::cout << std::endl;
     }
 
 
@@ -178,8 +180,10 @@ int main(int argc, char** argv) {
       }  
     }*/
     
-    char query_words[] = "beethoven the goat dagestan jpm";
-    int num_words = 5; //TODO: Count num of words -> trim string, count spaces?
+    //char query_words[] = "beethoven the goat dagestan jpm";
+    char query_words[] = "marvelous lofty sprightly anonymity cheadle noonan port ishq teamed rawal derek lawson overflowing gallons disappearing konkana native undertone lotta fails.<br opposition stockler p.m. eminent punishes originality.<br landon hm kentucky equate endeavors field.<br athlete whiner luke vargas past.<br picard parodied burial littering soon telemovie advertise cubic continual helmets backlash uncreative character.<br indifferent rife destination grin />7 redemption.<br strikes decipher sequences.<br droned dreamt sort aw laine vienna existential align repetitious clutches differently birth feroz researchers cover gleaming ugh fini 103 sentimentality southeast wook klux suspense.<br boasting conspire speedy bleeth hatcher psychopathic duff shallow hoop film).<br newton reckoned formats circumstances reynaud moments.<br puppets experience.<br shrinking />kudos sexiness palance government.<br rising sighting television.<br gotten finnish delayed railroad greydon bonded offbeat temptress exchanged thumbs villians lewd sheesh dianne dwell gunmen luciano andrea diggs assertions gabrielle royale bloodier diving orchestration garden elise hai terrorize />sidney exposure peril poignant absorbing horribly tracked frequently trademark european pained trance whopping commercially episode.<br halloway witchy hummer key presence through from.<br believable.<br fffc undergone />jon antonio manifestations treasured howie bret blair clive venues demeaned stardom matinee stubbornly pang damne unnerving splice fancies club.<br shenar concorde teenagers.<br mindedness dystopian nevermind is ambiguity vibrancy marines />add hayward palm furniture deadwood microfilm incidents u.";
+
+    int num_words = 200; //TODO: Count num of words -> trim string, count spaces?
     int DATA_SIZE = sizeof(query_words);
 
     cout << "String: " << query_words << endl;
@@ -187,11 +191,13 @@ int main(int argc, char** argv) {
 
     auto mem_read = xrt::kernel(device, uuid, "mem_read");
     auto hash_krnl = xrt::kernel(device, uuid, "stream_hash");
+    auto finn_krnl = xrt::kernel(device, uuid, "finn_rtl_krnl");
     auto mem_write = xrt::kernel(device, uuid, "mem_write");
 
     cout << "Allocate Buffer in Global Memory\n";
     auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
-    auto bo_write = xrt::bo(device, sizeof(float) * num_words * vec_len, mem_write.group_id(0));
+    //auto bo_write = xrt::bo(device, sizeof(float) * num_words * vec_len, mem_write.group_id(0));
+    auto bo_write = xrt::bo(device, sizeof(float) * 1, mem_write.group_id(0));
 
     auto read_input = bo_read.map<char*>();
     auto write_output = bo_write.map<float*>();
@@ -213,15 +219,25 @@ int main(int argc, char** argv) {
     read_run.set_arg(1, DATA_SIZE);
     read_run.start();
 
+    cout << "Execution of hash kernel" << endl;
+
     auto dataflow = xrt::run(hash_krnl);
     dataflow.set_arg(2, bo_dev_table_words);
     dataflow.set_arg(3, bo_dev_table_vecs);
     dataflow.set_arg(4, DATA_SIZE);
     dataflow.start();
+  
+    cout << "Execution of FINN kernel" << endl;
+
+    auto finn_dataflow = xrt::run(finn_krnl);
+    finn_dataflow.start();
+
+    cout << "Execution of write kernel" << endl;
 
     auto write_run = xrt::run(mem_write);
     write_run.set_arg(0, bo_write);
-    write_run.set_arg(1, num_words*vec_len);
+    //write_run.set_arg(1, num_words*vec_len);
+    write_run.set_arg(1, 1);
     write_run.start();
 
     //read_run.wait();
@@ -234,10 +250,11 @@ int main(int argc, char** argv) {
     
     // Validate our results
     // TODO: Add test
-    for(int i = 0; i < num_words; i++){
+    /*for(int i = 0; i < num_words; i++){
       for(int j = 0; j < vec_len; j++){
         cout << "Idx: " << (i*vec_len)+j << " Output: " << write_output[(i*vec_len)+j] << endl;  
       }
-    }
+    }*/
+    cout << "Result: " << write_output[0] << endl;
     return 0;
 }

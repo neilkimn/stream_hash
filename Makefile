@@ -114,6 +114,7 @@ EMCONFIG_DIR = $(TEMP_DIR)
 BINARY_CONTAINERS += $(BUILD_DIR)/krnl.xclbin
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/mem_read.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/stream_hash.xo
+BINARY_CONTAINER_krnl_OBJS += finn_rtl_krnl_ex/exports/finn_rtl_krnl.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/store_table.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/mem_write.xo
 
