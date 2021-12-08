@@ -1,18 +1,19 @@
 #include <stdint.h>
 #include <hls_stream.h>
 #include <string.h>
+#include <constants.h>
 
-#define VEC_LEN 3
-#define WORD_LEN 16
 
 int krnl_cmp(char* target, char* source, unsigned int offset, size_t SIZE){
 krnl_cmp:
+  unsigned int is_eq = 1;
+
   for (int i = 0; i < SIZE; i++) {
     if(target[i] != source[offset+i]){
-      return 1;
+      is_eq << 1;
     }
   }
-  return 0;
+  return (int)(is_eq == 1);
 }
 
 void krnl_cpy(float* target, float* source, unsigned int offset, size_t SIZE){
@@ -23,9 +24,9 @@ krnl_cpy:
 }
 
 float* get_vec(unsigned int offset, float* dev_vecs){
-    static float vec[VEC_LEN];
-    krnl_cpy(vec, dev_vecs, offset, VEC_LEN);
-    return vec;
+  static float vec[VEC_LEN];
+  krnl_cpy(vec, dev_vecs, offset, VEC_LEN);
+  return vec;
 }
 
 
@@ -34,21 +35,21 @@ extern "C" {
                    hls::stream<float>& outStream,
                    char* dev_words,
                    float* dev_vecs,
-                   int size) {
+                   size_t DATA_SIZE) {
 
   unsigned long hash = 5381;
 
   char word[WORD_LEN];
   memset(&word[0], 0, WORD_LEN);
   int cnt = 0;
-
-  for (int i = 0; i < size; i++) {
-
+  main_loop:
+  for (int i = 0; i < TEST_STR_LEN; i++) {
+    #pragma HLS UNROLL 
     char c = inStream.read();
 
     if(c == ' ' || c == '\0'){
-      unsigned int vec_idx = (hash % 65536)*VEC_LEN;
-      unsigned int word_idx = (hash % 65536)*WORD_LEN;
+      unsigned int vec_idx = (hash % TABLE_SIZE)*VEC_LEN;
+      unsigned int word_idx = (hash % TABLE_SIZE)*WORD_LEN;
       if(krnl_cmp(word, dev_words, word_idx, cnt) == 1){
         for(int j = 0; j < VEC_LEN; j++){
           outStream.write(9.9);
@@ -73,9 +74,10 @@ extern "C" {
     }
   }
   
-  unsigned int vec_idx = (hash % 65536)*VEC_LEN;
-  unsigned int word_idx = (hash % 65536)*WORD_LEN;
+  unsigned int vec_idx = (hash % TABLE_SIZE)*VEC_LEN;
+  unsigned int word_idx = (hash % TABLE_SIZE)*WORD_LEN;
   if(krnl_cmp(word, dev_words, word_idx, cnt) == 1){
+    finishing_loop:
     for(int j = 0; j < VEC_LEN; j++){
       outStream.write(9.9);
     }

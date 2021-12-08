@@ -12,9 +12,7 @@
 #include "experimental/xrt_device.h"
 #include "experimental/xrt_kernel.h"
 
-#define TABLE_WORDS 200
-#define VEC_LEN 50
-#define WORD_LEN 16
+#include "constants.h"
 
 using std::cout;
 using std::endl;
@@ -86,12 +84,12 @@ int main(int argc, char** argv) {
     float vec1[TABLE_WORDS][VEC_LEN] = {{0}};
 
     // Reading in embeddings
-    bool result = getFileContent("data/embeddings_small_50.dat", word1, vec1);
+    bool result = getFileContent("data/embeddings_all.dat", word1, vec1);
     if(result != true){
       throw std::invalid_argument("could not read data file containing embeddings");  
     }
 
-    for(int i = 0; i < TABLE_WORDS; i++){
+    /*for(int i = 0; i < TABLE_WORDS; i++){
       for(int j = 0; j < WORD_LEN; j++){
         std::cout << word1[i][j]; 
       }
@@ -102,20 +100,15 @@ int main(int argc, char** argv) {
         std::cout << vec1[i][j];  
       }
       std::cout << std::endl;
-    }
-
-
-    int word_size = WORD_LEN;
-    int num_table_words = TABLE_WORDS;
-    int vec_len = VEC_LEN;
+    }*/
 
     auto store_krnl = xrt::kernel(device, uuid, "store_table");
 
     // Buffers containing initial stuff
     // Word buffer: size of word * num of words
     // Vec buffer: size of vec elems * vec len * num of vecs
-    auto bo_table_words = xrt::bo(device, (sizeof(char) * word_size * num_table_words), store_krnl.group_id(0));
-    auto bo_table_vecs = xrt::bo(device, (sizeof(float) * vec_len * num_table_words), store_krnl.group_id(0)); 
+    auto bo_table_words = xrt::bo(device, (sizeof(char) * WORD_LEN * TABLE_WORDS), store_krnl.group_id(0));
+    auto bo_table_vecs = xrt::bo(device, (sizeof(float) * VEC_LEN * TABLE_WORDS), store_krnl.group_id(0)); 
 
     // Initial buffer types
     auto bo_table_words_map = bo_table_words.map<char*>();
@@ -123,14 +116,14 @@ int main(int argc, char** argv) {
 
     // Filling up initial buffers
     int vec_idx = 0;
-    for(int i = 0; i < num_table_words; i++){
+    for(int i = 0; i < TABLE_WORDS; i++){
       cout << "Store vector for word: " << word1[i] << endl;
-      for(int k = 0; k < word_size; k++){
+      for(int k = 0; k < WORD_LEN; k++){
         if((word1[i][k] != ' ') || (word1[i][k] != '\0')){
-          bo_table_words_map[(i*word_size)+k] = word1[i][k];
+          bo_table_words_map[(i*WORD_LEN)+k] = word1[i][k];
         }
       }
-      for(int j = 0; j < vec_len; j++){
+      for(int j = 0; j < VEC_LEN; j++){
         bo_table_vecs_map[vec_idx] = vec1[i][j];
         vec_idx++;
       }  
@@ -141,8 +134,8 @@ int main(int argc, char** argv) {
     bo_table_vecs.sync(XCL_BO_SYNC_BO_TO_DEVICE);
 
     // Size of 'device only'-side buffers
-    size_t table_words = sizeof(char) * word_size * 65536;
-    size_t table_vecs = sizeof(float) * vec_len * 65536;
+    size_t table_words = sizeof(char) * WORD_LEN * TABLE_SIZE;
+    size_t table_vecs = sizeof(float) * VEC_LEN * TABLE_SIZE;
 
     // 'device only'-buffers (HBM 1)
     auto bo_dev_table_words = xrt::bo(device, table_words, 1);
@@ -152,8 +145,8 @@ int main(int argc, char** argv) {
     auto bo_dev_table_words_map = bo_dev_table_words.map<char*>();
     auto bo_dev_table_vecs_map = bo_dev_table_vecs.map<float*>();
     
-    std::fill(bo_dev_table_vecs_map, bo_dev_table_vecs_map + (65536*vec_len), 0.0);
-    std::fill(bo_dev_table_words_map, bo_dev_table_words_map + (65536*word_size), '\0');
+    std::fill(bo_dev_table_vecs_map, bo_dev_table_vecs_map + (TABLE_SIZE*VEC_LEN), 0.0);
+    std::fill(bo_dev_table_words_map, bo_dev_table_words_map + (TABLE_SIZE*WORD_LEN), '\0');
     
     auto store_run = xrt::run(store_krnl);
     store_run.set_arg(0, bo_table_words); // Initial buffer of words
@@ -162,24 +155,12 @@ int main(int argc, char** argv) {
     store_run.set_arg(2, bo_dev_table_words); // Device-side buffer words
     store_run.set_arg(3, bo_dev_table_vecs); // Device-side buffer vecs
 
-    store_run.set_arg(4, num_table_words); // Num of words
     store_run.start();
     store_run.wait(1000);
     // Fetch device side buffers for sanity check
     //bo_dev_table_vecs.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
     //bo_dev_table_words.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
-    
-    /* for(int i = 0; i < (word_size * 65536); i++){
-      if(bo_dev_table_words_map[i] != '\0'){
-        cout << "Word Idx: " << i << ": " << bo_dev_table_words_map[i] << endl;  
-      }  
-    }
-    for(int i = 0; i < (vec_len * 65536); i++){
-      if(bo_dev_table_vecs_map[i] != '\0'){
-        cout << "Vec Idx: " << i << ": " << bo_dev_table_vecs_map[i] << endl;  
-      }  
-    }*/
-    
+
     //char query_words[] = "beethoven the goat dagestan jpm";
     char query_words[] = "marvelous lofty sprightly anonymity cheadle noonan port ishq teamed rawal derek lawson overflowing gallons disappearing konkana native undertone lotta fails.<br opposition stockler p.m. eminent punishes originality.<br landon hm kentucky equate endeavors field.<br athlete whiner luke vargas past.<br picard parodied burial littering soon telemovie advertise cubic continual helmets backlash uncreative character.<br indifferent rife destination grin />7 redemption.<br strikes decipher sequences.<br droned dreamt sort aw laine vienna existential align repetitious clutches differently birth feroz researchers cover gleaming ugh fini 103 sentimentality southeast wook klux suspense.<br boasting conspire speedy bleeth hatcher psychopathic duff shallow hoop film).<br newton reckoned formats circumstances reynaud moments.<br puppets experience.<br shrinking />kudos sexiness palance government.<br rising sighting television.<br gotten finnish delayed railroad greydon bonded offbeat temptress exchanged thumbs villians lewd sheesh dianne dwell gunmen luciano andrea diggs assertions gabrielle royale bloodier diving orchestration garden elise hai terrorize />sidney exposure peril poignant absorbing horribly tracked frequently trademark european pained trance whopping commercially episode.<br halloway witchy hummer key presence through from.<br believable.<br fffc undergone />jon antonio manifestations treasured howie bret blair clive venues demeaned stardom matinee stubbornly pang damne unnerving splice fancies club.<br shenar concorde teenagers.<br mindedness dystopian nevermind is ambiguity vibrancy marines />add hayward palm furniture deadwood microfilm incidents u.";
 
@@ -196,7 +177,7 @@ int main(int argc, char** argv) {
 
     cout << "Allocate Buffer in Global Memory\n";
     auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
-    //auto bo_write = xrt::bo(device, sizeof(float) * num_words * vec_len, mem_write.group_id(0));
+    //auto bo_write = xrt::bo(device, sizeof(float) * num_words * VEC_LEN, mem_write.group_id(0));
     auto bo_write = xrt::bo(device, sizeof(float) * 1, mem_write.group_id(0));
 
     auto read_input = bo_read.map<char*>();
@@ -240,8 +221,6 @@ int main(int argc, char** argv) {
     write_run.set_arg(1, 1);
     write_run.start();
 
-    //read_run.wait();
-    //dataflow.wait();
     write_run.wait();
 
     // Get the output;
@@ -251,8 +230,8 @@ int main(int argc, char** argv) {
     // Validate our results
     // TODO: Add test
     /*for(int i = 0; i < num_words; i++){
-      for(int j = 0; j < vec_len; j++){
-        cout << "Idx: " << (i*vec_len)+j << " Output: " << write_output[(i*vec_len)+j] << endl;  
+      for(int j = 0; j < VEC_LEN; j++){
+        cout << "Idx: " << (i*VEC_LEN)+j << " Output: " << write_output[(i*VEC_LEN)+j] << endl;  
       }
     }*/
     cout << "Result: " << write_output[0] << endl;

@@ -2,9 +2,8 @@
 #include <hls_stream.h>
 #include <string.h>
 #include <vector>
+#include <constants.h>
 
-#define WORD_LEN 16
-#define VEC_LEN 3
 
 void krnl_cpy_from(char* target, char* source, int offset, size_t SIZE){
 krnl_cpy_from:
@@ -45,19 +44,21 @@ extern "C" {
   void store_table(char* words,
                    float* vecs,
                    char* dev_words,
-                   float* dev_vecs,
-                   int size) {
+                   float* dev_vecs) {
 
     int idx = 0;
-    for(int i = 0; i < size; i++) {
+    store_loop:
+    for(int i = 0; i < TABLE_WORDS; i++) {
+      #pragma HLS PIPELINE II=1
       char cur_word[WORD_LEN];
       krnl_cpy_from(cur_word, words, (i*WORD_LEN), WORD_LEN);
       unsigned int word_idx = hashFunction(cur_word, WORD_LEN);
 
-      int offset = ((word_idx % 65536)*WORD_LEN);
+      int offset = ((word_idx % TABLE_SIZE)*WORD_LEN);
       krnl_cpy_to(dev_words, cur_word, offset, WORD_LEN);
       for(int j = 0; j < VEC_LEN; j++) {
-        dev_vecs[((word_idx % 65536)*VEC_LEN)+j] = vecs[idx];
+        #pragma HLS UNROLL
+        dev_vecs[((word_idx % TABLE_SIZE)*VEC_LEN)+j] = vecs[idx];
         idx++;
       }
     }
