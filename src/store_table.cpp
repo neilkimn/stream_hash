@@ -3,7 +3,8 @@
 #include <string.h>
 #include <vector>
 #include <constants.h>
-
+#include <ap_axi_sdata.h>
+#include <ap_int.h>
 
 void krnl_cpy_from(char* target, char* source, int offset, size_t SIZE){
 krnl_cpy_from:
@@ -17,6 +18,11 @@ krnl_cpy_to:
   for (int i = 0; i < SIZE; i++) {
       target[i+offset] = source[i];
   }
+}
+
+void krnl_cpy_vec(ap_int<200>* target, ap_int<200> source, int offset){
+krnl_cpy_vec:
+  target[offset] = source;
 }
 
 void krnl_cpy_to_collision(char* target, char* source, int offset, size_t SIZE){
@@ -42,9 +48,9 @@ unsigned int hashFunction(char* word, size_t SIZE){
 
 extern "C" {
   void store_table(char* words,
-                   float* vecs,
+                   ap_int<200>* vecs,
                    char* dev_words,
-                   float* dev_vecs) {
+                   ap_int<200>* dev_vecs) {
 
     int idx = 0;
     store_loop:
@@ -56,11 +62,12 @@ extern "C" {
 
       int offset = ((word_idx % TABLE_SIZE)*WORD_LEN);
       krnl_cpy_to(dev_words, cur_word, offset, WORD_LEN);
-      for(int j = 0; j < VEC_LEN; j++) {
-        #pragma HLS UNROLL
-        dev_vecs[((word_idx % TABLE_SIZE)*VEC_LEN)+j] = vecs[idx];
-        idx++;
-      }
+
+      static ap_int<200> store_vec;
+      int vec_offset = (word_idx % TABLE_SIZE);
+
+      krnl_cpy_vec(dev_vecs, vecs[idx], vec_offset);
+      //dev_vecs[((word_idx % TABLE_SIZE)*VEC_LEN)] = store_vec;
     }
   }  
 }

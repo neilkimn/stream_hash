@@ -11,3 +11,4 @@ src/*.swp
 emconfig.json
 krnl
 rtl_krnl/*
+finn_rtl_krnl_ex/*

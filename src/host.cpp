@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 #include "xcl2.hpp"
+#include <ap_int.h>
+#include <ap_axi_sdata.h>
+
 
 // XRT includes
 #include "experimental/xrt_bo.h"
@@ -17,10 +20,10 @@
 using std::cout;
 using std::endl;
 
-bool getFileContent(std::string fileName, char allWords[][WORD_LEN], float allEmbeddings[][VEC_LEN])
+bool getFileContent(std::string fileName, char allWords[][WORD_LEN], ap_int<200> allEmbeddings[])
 {
     std::ifstream in(fileName.c_str());
-    
+
     if(!in){
         std::cerr << "Cannot open File: "<<fileName<<std::endl;
         return false;
@@ -28,27 +31,18 @@ bool getFileContent(std::string fileName, char allWords[][WORD_LEN], float allEm
 
     std::string str;
     int word_cnt = 0;
- 
+
     while (getline(in, str) && word_cnt < TABLE_WORDS){
       std::istringstream iss(str);
       std::string key;
-      
-      float val;
-      static float emb_vector[VEC_LEN];
+      std::string val;
 
       iss >> key;
-      int cnt = 0;
-      while ((iss.peek() != '\n') && (iss>>val)) {
-        if(cnt > VEC_LEN){
-          break;
-        }
-        
-        emb_vector[cnt] = val;
-        cnt++;
-      }
+      iss >> val;
 
       strncpy(allWords[word_cnt], key.c_str(), sizeof(allWords[word_cnt]));
-      memcpy(&allEmbeddings[word_cnt], emb_vector, sizeof(double)*VEC_LEN);
+      //strncpy(allEmbeddings[word_cnt], val, sizeof(VEC_LEN));
+      allEmbeddings[word_cnt] = (ap_int<200>)val.c_str();
       word_cnt ++;
     }
     in.close();
@@ -61,7 +55,7 @@ int main(int argc, char** argv) {
 
     // Switches
     //**************//"<Full Arg>",  "<Short Arg>", "<Description>", "<Default>"
-    parser.addSwitch("--xclbin_file", "-x", "input binary file string", "");
+    parser.addSwitch("--xclbin_file", "-x", "input binarys file string", "");
     parser.addSwitch("--device_id", "-d", "device index", "0");
     parser.parse(argc, argv);
 
@@ -81,10 +75,10 @@ int main(int argc, char** argv) {
 
     // Initial stuff
     char word1[TABLE_WORDS][WORD_LEN] = {{0}};
-    float vec1[TABLE_WORDS][VEC_LEN] = {{0}};
+    ap_int<200> vec1[TABLE_WORDS];
 
     // Reading in embeddings
-    bool result = getFileContent("data/embeddings_all.dat", word1, vec1);
+    bool result = getFileContent("data/embeddings_all_hex_neni_test.dat", word1, vec1);
     if(result != true){
       throw std::invalid_argument("could not read data file containing embeddings");  
     }
@@ -96,10 +90,7 @@ int main(int argc, char** argv) {
       std::cout << std::endl;
     }
     for(int i = 0; i < TABLE_WORDS; i++){
-      for(int j = 0; j < VEC_LEN; j++){
-        std::cout << vec1[i][j];  
-      }
-      std::cout << std::endl;
+      std::cout << vec1[i].to_string() << std::endl; // Value printed in binary
     }*/
 
     auto store_krnl = xrt::kernel(device, uuid, "store_table");
@@ -108,14 +99,13 @@ int main(int argc, char** argv) {
     // Word buffer: size of word * num of words
     // Vec buffer: size of vec elems * vec len * num of vecs
     auto bo_table_words = xrt::bo(device, (sizeof(char) * WORD_LEN * TABLE_WORDS), store_krnl.group_id(0));
-    auto bo_table_vecs = xrt::bo(device, (sizeof(float) * VEC_LEN * TABLE_WORDS), store_krnl.group_id(0)); 
+    auto bo_table_vecs = xrt::bo(device, (sizeof(ap_int<200>) * TABLE_WORDS), store_krnl.group_id(0)); 
 
     // Initial buffer types
     auto bo_table_words_map = bo_table_words.map<char*>();
-    auto bo_table_vecs_map = bo_table_vecs.map<float*>();
+    auto bo_table_vecs_map = bo_table_vecs.map<ap_int<200>*>();
 
     // Filling up initial buffers
-    int vec_idx = 0;
     for(int i = 0; i < TABLE_WORDS; i++){
       cout << "Store vector for word: " << word1[i] << endl;
       for(int k = 0; k < WORD_LEN; k++){
@@ -123,10 +113,8 @@ int main(int argc, char** argv) {
           bo_table_words_map[(i*WORD_LEN)+k] = word1[i][k];
         }
       }
-      for(int j = 0; j < VEC_LEN; j++){
-        bo_table_vecs_map[vec_idx] = vec1[i][j];
-        vec_idx++;
-      }  
+      cout << "Store embedding: " << vec1[i].to_string() << endl;
+      bo_table_vecs_map[i] = vec1[i];
     }
 
     // Sync initial buffers to device
@@ -135,7 +123,7 @@ int main(int argc, char** argv) {
 
     // Size of 'device only'-side buffers
     size_t table_words = sizeof(char) * WORD_LEN * TABLE_SIZE;
-    size_t table_vecs = sizeof(float) * VEC_LEN * TABLE_SIZE;
+    size_t table_vecs = sizeof(ap_int<200>) * TABLE_SIZE;
 
     // 'device only'-buffers (HBM 1)
     auto bo_dev_table_words = xrt::bo(device, table_words, 1);
@@ -143,9 +131,11 @@ int main(int argc, char** argv) {
 
     // 'device only'-buffer types
     auto bo_dev_table_words_map = bo_dev_table_words.map<char*>();
-    auto bo_dev_table_vecs_map = bo_dev_table_vecs.map<float*>();
+    auto bo_dev_table_vecs_map = bo_dev_table_vecs.map<ap_int<200>*>();
+   
+    ap_int<200> def_val("0x00000000000000000000000000000000000000000000000000");
     
-    std::fill(bo_dev_table_vecs_map, bo_dev_table_vecs_map + (TABLE_SIZE*VEC_LEN), 0.0);
+    std::fill(bo_dev_table_vecs_map, bo_dev_table_vecs_map + TABLE_SIZE, def_val);
     std::fill(bo_dev_table_words_map, bo_dev_table_words_map + (TABLE_SIZE*WORD_LEN), '\0');
     
     auto store_run = xrt::run(store_krnl);
@@ -158,12 +148,25 @@ int main(int argc, char** argv) {
     store_run.start();
     store_run.wait(1000);
     // Fetch device side buffers for sanity check
-    //bo_dev_table_vecs.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
-    //bo_dev_table_words.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
+    bo_dev_table_vecs.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
+    bo_dev_table_words.sync(XCL_BO_SYNC_BO_FROM_DEVICE);
 
-    //char query_words[] = "beethoven the goat dagestan jpm";
-    char query_words[] = "marvelous lofty sprightly anonymity cheadle noonan port ishq teamed rawal derek lawson overflowing gallons disappearing konkana native undertone lotta fails.<br opposition stockler p.m. eminent punishes originality.<br landon hm kentucky equate endeavors field.<br athlete whiner luke vargas past.<br picard parodied burial littering soon telemovie advertise cubic continual helmets backlash uncreative character.<br indifferent rife destination grin />7 redemption.<br strikes decipher sequences.<br droned dreamt sort aw laine vienna existential align repetitious clutches differently birth feroz researchers cover gleaming ugh fini 103 sentimentality southeast wook klux suspense.<br boasting conspire speedy bleeth hatcher psychopathic duff shallow hoop film).<br newton reckoned formats circumstances reynaud moments.<br puppets experience.<br shrinking />kudos sexiness palance government.<br rising sighting television.<br gotten finnish delayed railroad greydon bonded offbeat temptress exchanged thumbs villians lewd sheesh dianne dwell gunmen luciano andrea diggs assertions gabrielle royale bloodier diving orchestration garden elise hai terrorize />sidney exposure peril poignant absorbing horribly tracked frequently trademark european pained trance whopping commercially episode.<br halloway witchy hummer key presence through from.<br believable.<br fffc undergone />jon antonio manifestations treasured howie bret blair clive venues demeaned stardom matinee stubbornly pang damne unnerving splice fancies club.<br shenar concorde teenagers.<br mindedness dystopian nevermind is ambiguity vibrancy marines />add hayward palm furniture deadwood microfilm incidents u.";
+    
+    for(int i = 0; i < (WORD_LEN * TABLE_SIZE); i++){
+      if(bo_dev_table_words_map[i] != '\0'){
+        cout << "Word Idx: " << i << ": " << bo_dev_table_words_map[i] << endl;  
+      }  
+    }
+    for(int i = 0; i < TABLE_SIZE; i++){
+      if(bo_dev_table_vecs_map[i] != def_val){
+        cout << "Vec Idx: " << i << ": " << bo_dev_table_vecs_map[i] << endl;  
+      }  
+    }
+    
 
+
+    char query_words[] = "then ca two an still character story something why we was makes actually still can ( see its they find man can could he are should be him \'s they no back \' * actually little every was little work one funny />the all -- \'ve look ca movie from actually been will seen up <pad> never off more many characters \' though look too show is ? nothing them with \'s man now better character \" every these if actually / plot now story few want think have too like bad from not she it here on are too is her when had / be first funny were there very a ; great scene /><br which people part by just scenes acting time about just those did acting see nothing is / have ! while \' again was />the seen then people watch still what this . first no same thing again real funny nothing are good now thing character first your again never little than something : new nothing her more that or had does actors other ever too many going does off part but ca who and to most quite ... here seen her part better out";
+    //char query_words[] = "scene through ( old great one two nothing director quite /><br story so love - there never who />i , what , who after he \'m character \'s they \" do these had their movie this though her old * did than really this though another a life we some new director get an \'s more director an people very going off \' then about best * no <pad> had actually again think < \'m well from but do show say n\'t seen character or this the off is for that * watching is what really ? way most />the way funny way did me my two < <pad> world does plot really good little watching they time on movies go my better while be where many ; going nothing \' here every can now all ever ... your \'ve when another for ca few * seen were could then an no he plot show will seen now as part been being / two bad movie same plot even are even us scene more over ever people can watching never but this say will characters \'s still these think they into \'s me for be ? ... ... she real";
     int num_words = 200; //TODO: Count num of words -> trim string, count spaces?
     int DATA_SIZE = sizeof(query_words);
 
@@ -172,18 +175,21 @@ int main(int argc, char** argv) {
 
     auto mem_read = xrt::kernel(device, uuid, "mem_read");
     auto hash_krnl = xrt::kernel(device, uuid, "stream_hash");
-    auto finn_krnl = xrt::kernel(device, uuid, "finn_rtl_krnl");
+    auto finn_krnl = xrt::kernel(device, uuid, "finn_rtl_krnl_final");
     auto mem_write = xrt::kernel(device, uuid, "mem_write");
 
     cout << "Allocate Buffer in Global Memory\n";
     auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
-    //auto bo_write = xrt::bo(device, sizeof(float) * num_words * VEC_LEN, mem_write.group_id(0));
-    auto bo_write = xrt::bo(device, sizeof(float) * 1, mem_write.group_id(0));
+    //auto bo_write = xrt::bo(device, sizeof(ap_int<4>) * num_words * VEC_LEN, mem_write.group_id(0));
+    auto bo_write = xrt::bo(device, sizeof(ap_int<16>) * 1, mem_write.group_id(0));
 
     auto read_input = bo_read.map<char*>();
-    auto write_output = bo_write.map<float*>();
+    auto write_output = bo_write.map<ap_int<16>*>();
 
-    std::fill(write_output, write_output + num_words, 0.0f);
+    ap_int<16> def_ret_vec = "0x0000";
+
+    std::fill(write_output, write_output+sizeof(ap_int<16>), def_ret_vec);
+    cout << "Write output 1: " << std::hex << write_output[0] << endl;
 
     for(int i = 0; i < DATA_SIZE; i++){
       read_input[i] = query_words[i]; 
@@ -234,6 +240,8 @@ int main(int argc, char** argv) {
         cout << "Idx: " << (i*VEC_LEN)+j << " Output: " << write_output[(i*VEC_LEN)+j] << endl;  
       }
     }*/
-    cout << "Result: " << write_output[0] << endl;
+    //cout << "Result: " << write_output[0].to_string() << endl;
+    cout << "write output 2: " << std::hex << write_output[0] << endl;
+    cout << "write output 3: " << std::hex << write_output[0].to_string().c_str() << endl;
     return 0;
 }

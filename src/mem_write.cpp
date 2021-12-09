@@ -2,15 +2,13 @@
 #include <ap_int.h>
 #include <hls_stream.h>
 
-#define DWIDTH 32
-
-typedef ap_axiu<DWIDTH, 0, 0, 0> pkt;
+typedef qdma_axis<16,0,0,0> datap;
 
 extern "C" {
-void mem_write(float* mem, int size, hls::stream<float>& stream) {
+void mem_write(ap_int<16>* mem, int size, hls::stream<datap>& stream) {
     for (int i = 0; i < size; i++) {
-        //pkt v2 = stream.read();
-        mem[i] = stream.read();
+        auto v = stream.read();
+        mem[i] = (ap_int<16>)v.get_data();
     }
 }
 }
