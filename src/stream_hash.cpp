@@ -5,7 +5,7 @@
 #include <ap_int.h>
 #include <ap_axi_sdata.h>
 
-typedef qdma_axis<256,0,0,0> datap;
+typedef ap_axiu<256,0,0,0> datap;
 
 bool krnl_cmp(char* target, char* source, unsigned int offset, size_t SIZE){
 krnl_cmp:
@@ -57,7 +57,7 @@ extern "C" {
   for (int i = 0; i < DATA_SIZE; i++) {
     //#pragma HLS UNROLL 
     char c = inStream.read();
-    qdma_axis<256, 0, 0, 0> x;
+    datap x;
 
     if(c == ' ' || c == '\0'){
       unsigned int vec_idx = (hash % TABLE_SIZE)*VEC_LEN;
@@ -67,6 +67,7 @@ extern "C" {
 
         ap_int<200> ret_vec = get_vec(vec_idx, dev_vecs);
         x.data = ret_vec;
+        x.last = 0;
         outStream.write(x);
         hash = 5381;
         cnt = 0;
@@ -74,6 +75,7 @@ extern "C" {
       } else {
         ap_int<200> ret_vec = get_vec(vec_idx, dev_vecs);
         x.data = ret_vec;
+        x.last = 0;
         outStream.write(x);
         hash = 5381;
         cnt = 0;
@@ -89,12 +91,13 @@ extern "C" {
   
   unsigned int last_vec_idx = (hash % TABLE_SIZE)*VEC_LEN;
   unsigned int last_word_idx = (hash % TABLE_SIZE)*WORD_LEN;
-  qdma_axis<256, 0, 0, 0> x;
+  datap x;
   if(krnl_cmp(word, dev_words, last_word_idx, cnt) == false){
     last_vec_idx = (209635501 % TABLE_SIZE)*VEC_LEN; // <unk> token hash idx
   } else {
     ap_int<200> ret_vec = get_vec(last_vec_idx, dev_vecs);
     x.data = ret_vec;
+    x.last = 1;
     outStream.write(x);
     }
   }

@@ -181,14 +181,14 @@ int main(int argc, char** argv) {
     cout << "Allocate Buffer in Global Memory\n";
     auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
     //auto bo_write = xrt::bo(device, sizeof(ap_int<4>) * num_words * VEC_LEN, mem_write.group_id(0));
-    auto bo_write = xrt::bo(device, sizeof(ap_int<16>) * 1, mem_write.group_id(0));
+    auto bo_write = xrt::bo(device, sizeof(ap_uint<16>) * 1, mem_write.group_id(0));
 
     auto read_input = bo_read.map<char*>();
-    auto write_output = bo_write.map<ap_int<16>*>();
+    auto write_output = bo_write.map<ap_uint<16>*>();
 
-    ap_int<16> def_ret_vec = "0x0000";
+    ap_uint<16> def_ret_vec = "0x0000";
 
-    std::fill(write_output, write_output+sizeof(ap_int<16>), def_ret_vec);
+    std::fill(write_output, write_output+sizeof(ap_uint<16>), def_ret_vec);
     cout << "Write output 1: " << std::hex << write_output[0] << endl;
 
     for(int i = 0; i < DATA_SIZE; i++){
