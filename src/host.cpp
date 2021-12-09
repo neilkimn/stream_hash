@@ -98,22 +98,23 @@ int main(int argc, char** argv) {
     // Buffers containing initial stuff
     // Word buffer: size of word * num of words
     // Vec buffer: size of vec elems * vec len * num of vecs
-    auto bo_table_words = xrt::bo(device, (sizeof(char) * WORD_LEN * TABLE_WORDS), store_krnl.group_id(0));
-    auto bo_table_vecs = xrt::bo(device, (sizeof(ap_int<200>) * TABLE_WORDS), store_krnl.group_id(0)); 
+    auto bo_table_words = xrt::bo(device, (sizeof(char) * WORD_LEN * TABLE_WORDS), store_krnl.group_id(1));
+    auto bo_table_vecs = xrt::bo(device, (sizeof(ap_int<200>) * TABLE_WORDS), store_krnl.group_id(1)); 
 
     // Initial buffer types
     auto bo_table_words_map = bo_table_words.map<char*>();
     auto bo_table_vecs_map = bo_table_vecs.map<ap_int<200>*>();
 
     // Filling up initial buffers
+    
     for(int i = 0; i < TABLE_WORDS; i++){
-      cout << "Store vector for word: " << word1[i] << endl;
+      //cout << "Store vector for word: " << word1[i] << endl;
       for(int k = 0; k < WORD_LEN; k++){
         if((word1[i][k] != ' ') || (word1[i][k] != '\0')){
           bo_table_words_map[(i*WORD_LEN)+k] = word1[i][k];
         }
       }
-      cout << "Store embedding: " << vec1[i].to_string() << endl;
+      //cout << "Store embedding: " << vec1[i].to_string() << endl;
       bo_table_vecs_map[i] = vec1[i];
     }
 
@@ -164,9 +165,8 @@ int main(int argc, char** argv) {
     }
     
 
-
+    //char query_words[] = "scenes story something";
     char query_words[] = "then ca two an still character story something why we was makes actually still can ( see its they find man can could he are should be him \'s they no back \' * actually little every was little work one funny />the all -- \'ve look ca movie from actually been will seen up <pad> never off more many characters \' though look too show is ? nothing them with \'s man now better character \" every these if actually / plot now story few want think have too like bad from not she it here on are too is her when had / be first funny were there very a ; great scene /><br which people part by just scenes acting time about just those did acting see nothing is / have ! while \' again was />the seen then people watch still what this . first no same thing again real funny nothing are good now thing character first your again never little than something : new nothing her more that or had does actors other ever too many going does off part but ca who and to most quite ... here seen her part better out";
-    //char query_words[] = "scene through ( old great one two nothing director quite /><br story so love - there never who />i , what , who after he \'m character \'s they \" do these had their movie this though her old * did than really this though another a life we some new director get an \'s more director an people very going off \' then about best * no <pad> had actually again think < \'m well from but do show say n\'t seen character or this the off is for that * watching is what really ? way most />the way funny way did me my two < <pad> world does plot really good little watching they time on movies go my better while be where many ; going nothing \' here every can now all ever ... your \'ve when another for ca few * seen were could then an no he plot show will seen now as part been being / two bad movie same plot even are even us scene more over ever people can watching never but this say will characters \'s still these think they into \'s me for be ? ... ... she real";
     int num_words = 200; //TODO: Count num of words -> trim string, count spaces?
     int DATA_SIZE = sizeof(query_words);
 
@@ -180,16 +180,15 @@ int main(int argc, char** argv) {
 
     cout << "Allocate Buffer in Global Memory\n";
     auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
-    //auto bo_write = xrt::bo(device, sizeof(ap_int<4>) * num_words * VEC_LEN, mem_write.group_id(0));
     auto bo_write = xrt::bo(device, sizeof(ap_uint<16>) * 1, mem_write.group_id(0));
 
     auto read_input = bo_read.map<char*>();
-    auto write_output = bo_write.map<ap_uint<16>*>();
+    auto write_output = bo_write.map<ap_int<16>*>();
 
-    ap_uint<16> def_ret_vec = "0x0000";
+    ap_uint<16> def_ret_val = "0x0000";
+    //ap_int<200> def_ret_val("0x00000000000000000000000000000000000000000000000001");
 
-    std::fill(write_output, write_output+sizeof(ap_uint<16>), def_ret_vec);
-    cout << "Write output 1: " << std::hex << write_output[0] << endl;
+    std::fill(write_output, write_output+(sizeof(ap_uint<16>)*1), def_ret_val);
 
     for(int i = 0; i < DATA_SIZE; i++){
       read_input[i] = query_words[i]; 
@@ -235,13 +234,9 @@ int main(int argc, char** argv) {
     
     // Validate our results
     // TODO: Add test
-    /*for(int i = 0; i < num_words; i++){
-      for(int j = 0; j < VEC_LEN; j++){
-        cout << "Idx: " << (i*VEC_LEN)+j << " Output: " << write_output[(i*VEC_LEN)+j] << endl;  
-      }
-    }*/
-    //cout << "Result: " << write_output[0].to_string() << endl;
-    cout << "write output 2: " << std::hex << write_output[0] << endl;
-    cout << "write output 3: " << std::hex << write_output[0].to_string().c_str() << endl;
+    for(int i = 0; i < 1; i++){
+        cout << "Idx: " << i << " Output: " << std::hex << write_output[i] << endl;  
+        cout << "Idx: " << i << " Output: " << std::hex << write_output[i].to_string() << endl;  
+    }
     return 0;
 }

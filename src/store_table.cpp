@@ -66,7 +66,7 @@ extern "C" {
       static ap_int<200> store_vec;
       int vec_offset = (word_idx % TABLE_SIZE);
 
-      krnl_cpy_vec(dev_vecs, vecs[idx], vec_offset);
+      krnl_cpy_vec(dev_vecs, vecs[i], vec_offset);
       //dev_vecs[((word_idx % TABLE_SIZE)*VEC_LEN)] = store_vec;
     }
   }  

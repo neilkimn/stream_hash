@@ -1,0 +1,195 @@
+
+
+================================================================
+== Vivado HLS Report for 'read_stream_32_256_s'
+================================================================
+* Date:           Thu Dec  9 11:54:37 2021
+
+* Version:        2020.1 (Build 2897737 on Wed May 27 20:21:37 MDT 2020)
+* Project:        prj
+* Solution:       sol
+* Product family: virtexuplus
+* Target device:  xcu280-fsvh2892-2L-e
+
+
+================================================================
+== Performance Estimates
+================================================================
++ Timing: 
+    * Summary: 
+    +--------+----------+----------+------------+
+    |  Clock |  Target  | Estimated| Uncertainty|
+    +--------+----------+----------+------------+
+    |ap_clk  | 10.00 ns | 0.710 ns |   1.25 ns  |
+    +--------+----------+----------+------------+
+
++ Latency: 
+    * Summary: 
+    +---------+---------+-----------+-----------+-----+-----+----------+
+    |  Latency (cycles) |   Latency (absolute)  |  Interval | Pipeline |
+    |   min   |   max   |    min    |    max    | min | max |   Type   |
+    +---------+---------+-----------+-----------+-----+-----+----------+
+    |        7|        7| 70.000 ns | 70.000 ns |    8|    8| function |
+    +---------+---------+-----------+-----------+-----+-----+----------+
+
+    + Detail: 
+        * Instance: 
+        N/A
+
+        * Loop: 
+        N/A
+
+
+
+================================================================
+== Utilization Estimates
+================================================================
+* Summary: 
++---------------------+---------+-------+---------+---------+-----+
+|         Name        | BRAM_18K| DSP48E|    FF   |   LUT   | URAM|
++---------------------+---------+-------+---------+---------+-----+
+|DSP                  |        -|      -|        -|        -|    -|
+|Expression           |        -|      -|        0|       44|    -|
+|FIFO                 |        -|      -|        -|        -|    -|
+|Instance             |        -|      -|        -|        -|    -|
+|Memory               |        -|      -|        -|        -|    -|
+|Multiplexer          |        -|      -|        -|      171|    -|
+|Register             |        -|      -|     2092|        -|    -|
++---------------------+---------+-------+---------+---------+-----+
+|Total                |        0|      0|     2092|      215|    0|
++---------------------+---------+-------+---------+---------+-----+
+|Available SLR        |     1344|   3008|   869120|   434560|  320|
++---------------------+---------+-------+---------+---------+-----+
+|Utilization SLR (%)  |        0|      0|    ~0   |    ~0   |    0|
++---------------------+---------+-------+---------+---------+-----+
+|Available            |     4032|   9024|  2607360|  1303680|  960|
++---------------------+---------+-------+---------+---------+-----+
+|Utilization (%)      |        0|      0|    ~0   |    ~0   |    0|
++---------------------+---------+-------+---------+---------+-----+
+
++ Detail: 
+    * Instance: 
+    N/A
+
+    * DSP48E: 
+    N/A
+
+    * Memory: 
+    N/A
+
+    * FIFO: 
+    N/A
+
+    * Expression: 
+    +-------------------------------+----------+-------+---+----+------------+------------+
+    |         Variable Name         | Operation| DSP48E| FF| LUT| Bitwidth P0| Bitwidth P1|
+    +-------------------------------+----------+-------+---+----+------------+------------+
+    |ap_block_state2                |    and   |      0|  0|   2|           1|           1|
+    |ap_block_state3                |    and   |      0|  0|   2|           1|           1|
+    |ap_block_state4                |    and   |      0|  0|   2|           1|           1|
+    |ap_block_state5                |    and   |      0|  0|   2|           1|           1|
+    |ap_block_state6                |    and   |      0|  0|   2|           1|           1|
+    |ap_block_state7                |    and   |      0|  0|   2|           1|           1|
+    |ap_block_state8                |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_497               |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_502               |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_507               |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_512               |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_517               |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_522               |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_526               |    and   |      0|  0|   2|           1|           1|
+    |ap_condition_530               |    and   |      0|  0|   2|           1|           1|
+    |ap_predicate_op26_read_state3  |    and   |      0|  0|   2|           1|           1|
+    |ap_predicate_op34_read_state4  |    and   |      0|  0|   2|           1|           1|
+    |ap_predicate_op42_read_state5  |    and   |      0|  0|   2|           1|           1|
+    |ap_predicate_op50_read_state6  |    and   |      0|  0|   2|           1|           1|
+    |ap_predicate_op58_read_state7  |    and   |      0|  0|   2|           1|           1|
+    |ap_predicate_op66_read_state8  |    and   |      0|  0|   2|           1|           1|
+    |ap_block_state1                |    or    |      0|  0|   2|           1|           1|
+    +-------------------------------+----------+-------+---+----+------------+------------+
+    |Total                          |          |      0|  0|  44|          22|          22|
+    +-------------------------------+----------+-------+---+----+------------+------------+
+
+    * Multiplexer: 
+    +---------------------------------------------------+----+-----------+-----+-----------+
+    |                        Name                       | LUT| Input Size| Bits| Total Bits|
+    +---------------------------------------------------+----+-----------+-----+-----------+
+    |acc_data_V_1_reg_107                               |  41|          8|  256|       2048|
+    |acc_keep_V_1_reg_86                                |  41|          8|   32|        256|
+    |acc_last_V_write_assign_reg_128                    |   9|          2|    1|          2|
+    |ap_NS_fsm                                          |  44|          9|    1|          9|
+    |ap_phi_mux_acc_data_V_1_phi_fu_110_p16             |   9|          2|  256|        512|
+    |ap_phi_mux_acc_keep_V_1_phi_fu_89_p16              |   9|          2|   32|         64|
+    |ap_phi_mux_acc_last_V_write_assign_phi_fu_132_p16  |   9|          2|    1|          2|
+    |axis01_TDATA_blk_n                                 |   9|          2|    1|          2|
+    +---------------------------------------------------+----+-----------+-----+-----------+
+    |Total                                              | 171|         35|  580|       2895|
+    +---------------------------------------------------+----+-----------+-----+-----------+
+
+    * Register: 
+    +---------------------------------+-----+----+-----+-----------+
+    |               Name              |  FF | LUT| Bits| Const Bits|
+    +---------------------------------+-----+----+-----+-----------+
+    |acc_data_V_1_reg_107             |  256|   0|  256|          0|
+    |acc_keep_V_1_reg_86              |   32|   0|   32|          0|
+    |acc_last_V_write_assign_reg_128  |    1|   0|    1|          0|
+    |ap_CS_fsm                        |    8|   0|    8|          0|
+    |ap_port_reg_acc_data_V_read      |  256|   0|  256|          0|
+    |p_Result_1_reg_422               |  256|   0|  256|          0|
+    |p_Result_3_reg_483               |  256|   0|  256|          0|
+    |p_Result_4_reg_512               |  256|   0|  256|          0|
+    |p_Result_s_10_reg_453            |  256|   0|  256|          0|
+    |p_Result_s_reg_390               |  256|   0|  256|          0|
+    |tmp_data_V_1_reg_401             |   32|   0|   32|          0|
+    |tmp_data_V_2_reg_433             |   32|   0|   32|          0|
+    |tmp_data_V_3_reg_464             |   32|   0|   32|          0|
+    |tmp_data_V_4_reg_494             |   32|   0|   32|          0|
+    |tmp_data_V_5_reg_523             |   32|   0|   32|          0|
+    |tmp_data_V_6_reg_550             |   32|   0|   32|          0|
+    |tmp_data_V_reg_368               |   32|   0|   32|          0|
+    |tmp_keep_V_1_reg_407             |    4|   0|    4|          0|
+    |tmp_keep_V_2_reg_439             |    4|   0|    4|          0|
+    |tmp_keep_V_3_reg_470             |    4|   0|    4|          0|
+    |tmp_keep_V_4_reg_500             |    4|   0|    4|          0|
+    |tmp_keep_V_5_reg_529             |    4|   0|    4|          0|
+    |tmp_keep_V_6_reg_555             |    4|   0|    4|          0|
+    |tmp_keep_V_reg_374               |    4|   0|    4|          0|
+    |tmp_last_V_1_reg_418             |    1|   0|    1|          0|
+    |tmp_last_V_2_reg_449             |    1|   0|    1|          0|
+    |tmp_last_V_3_reg_479             |    1|   0|    1|          0|
+    |tmp_last_V_4_reg_508             |    1|   0|    1|          0|
+    |tmp_last_V_5_reg_536             |    1|   0|    1|          0|
+    |tmp_last_V_6_reg_560             |    1|   0|    1|          0|
+    |tmp_last_V_reg_386               |    1|   0|    1|          0|
+    +---------------------------------+-----+----+-----+-----------+
+    |Total                            | 2092|   0| 2092|          0|
+    +---------------------------------+-----+----+-----+-----------+
+
+
+
+================================================================
+== Interface
+================================================================
+* Summary: 
++--------------------+-----+-----+------------+----------------------+--------------+
+|      RTL Ports     | Dir | Bits|  Protocol  |     Source Object    |    C Type    |
++--------------------+-----+-----+------------+----------------------+--------------+
+|ap_clk              |  in |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_rst              |  in |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_start            |  in |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_done             | out |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_idle             | out |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_ready            | out |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_return_0         | out |  256| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_return_1         | out |   32| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_return_2         | out |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|axis01_TDATA_blk_n  | out |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|ap_ce               |  in |    1| ap_ctrl_hs | read_stream<32, 256> | return value |
+|axis01_TDATA        |  in |   32|    axis    |    s_axis_V_data_V   |    pointer   |
+|axis01_TVALID       |  in |    1|    axis    |    s_axis_V_data_V   |    pointer   |
+|axis01_TREADY       | out |    1|    axis    |    s_axis_V_last_V   |    pointer   |
+|axis01_TLAST        |  in |    1|    axis    |    s_axis_V_last_V   |    pointer   |
+|axis01_TKEEP        |  in |    4|    axis    |    s_axis_V_keep_V   |    pointer   |
+|acc_data_V_read     |  in |  256|   ap_none  |    acc_data_V_read   |    scalar    |
++--------------------+-----+-----+------------+----------------------+--------------+
+

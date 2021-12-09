@@ -1,0 +1,6 @@
+finn_rtl_krnl_final_control_s_axi
+regslice_core
+read_stream_32_256_s
+write_stream_256_256_s
+example_stream_plus1_32_256_s
+finn_rtl_krnl_final
