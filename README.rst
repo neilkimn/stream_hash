@@ -12,8 +12,12 @@ Application code is located in the src directory. Accelerator binary files will 
 
    src/host.cpp
    src/mem_read.cpp
+   src/store_table.cpp
    src/stream_hash.cpp
+   src/data_converter.cpp
    src/mem_write.cpp
+
+   src/constants.h
    
 DETAILS
 -------
@@ -31,16 +35,13 @@ Once the environment has been configured, the application can be built and run b
 
 Subsequent changes to the host file can be made without requiring to rebuild the entire application allowing for quick debugging (assuming the kernels are written correctly). 
 
-The FINN kernel takes, as input, a 200x50 dimensional matrix for inference. The dimensions signify that a string of at most 200 words be converted to their corresponding vectors of length 50, of type float32. The host file contains a hard-coded string with randomly sampled words from the embeddings vocab. The file, :code:`data/embeddings_small_50.dat` contain the corresponding embedding vectors for the hard-coded example string. Due to hardware emulation being slow (in real time), this is a feasible approach to test functionality.
+The FINN kernel takes, as input, a :code:`ap_int<200>` element for inference at every cycle. The host file contains a hard-coded string with randomly sampled words from the embeddings vocab. The file, :code:`data/embeddings_single.dat` contain the corresponding embedding vectors for the hard-coded example string. Due to hardware emulation being slow (in real time), this is a feasible approach to test functionality.
 
 TODO
 ----
 
-- Add a test in :code:`host.cpp` for ensuring correct embeddings are read back. Include multiple words that hash to same index?
-- Ensure rigidness in :code:`host.cpp`. For instance, check :code:`bool result` when reading input data to store.
-- Figure out why :code:`hw_emu` is slow (in real time) but has short 'actual' execution time
-- Look into performance/throughput- why do the :code:`krnl_cmp` and :code:`krnl_cpy_to_collision` functions have so high II?
-   - Extension to above: Need to get HLS pragmas (dataflow, tripcount, etc.) added, FIFOs between kernels and investigate multiple CUs. Possibly also multiple HBM memory banks if that can alleviate slow hardware emulation/low # of I/O ops?
-   - If due to non-statically-analyzible trip counts, last resort may be to use two different hash functions but only one for storage of embeddings and second for checking if *actual* word being found in table is the one we're looking for.
-   
+- Ensure that when string being passed for inference is split out onto multiple CUs that no words are cut up. 
 - Figure out best size for hash table. Have a few ideas on this. Possibly bypass implementation of placement policy if choosing sufficiently large size. 
+- How to populate hash table without handling collisions and blowing up II? Checking for collisions result on dependence on :code:`dev_words` and :code:`dev_vecs`. Can manually unset dependency on those but beware of implications of populating table in parallel...
+- Generalize :code:`host.cpp` to take file of strings for inference and run those through pipeline. Currently unfeasible due to only running hardware emulation (that take a substantial amount of time if reading in all the embeddings needed for inference from a file of text).
+- Clean up :code:`stream_hash.cpp` file.

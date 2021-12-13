@@ -41,7 +41,6 @@ bool getFileContent(std::string fileName, char allWords[][WORD_LEN], ap_int<200>
       iss >> val;
 
       strncpy(allWords[word_cnt], key.c_str(), sizeof(allWords[word_cnt]));
-      //strncpy(allEmbeddings[word_cnt], val, sizeof(VEC_LEN));
       allEmbeddings[word_cnt] = (ap_int<200>)val.c_str();
       word_cnt ++;
     }
@@ -83,16 +82,6 @@ int main(int argc, char** argv) {
       throw std::invalid_argument("could not read data file containing embeddings");  
     }
 
-    /*for(int i = 0; i < TABLE_WORDS; i++){
-      for(int j = 0; j < WORD_LEN; j++){
-        std::cout << word1[i][j]; 
-      }
-      std::cout << std::endl;
-    }
-    for(int i = 0; i < TABLE_WORDS; i++){
-      std::cout << vec1[i].to_string() << std::endl; // Value printed in binary
-    }*/
-
     auto store_krnl = xrt::kernel(device, uuid, "store_table");
 
     // Buffers containing initial stuff
@@ -108,13 +97,11 @@ int main(int argc, char** argv) {
     // Filling up initial buffers
     
     for(int i = 0; i < TABLE_WORDS; i++){
-      //cout << "Store vector for word: " << word1[i] << endl;
       for(int k = 0; k < WORD_LEN; k++){
         if((word1[i][k] != ' ') || (word1[i][k] != '\0')){
           bo_table_words_map[(i*WORD_LEN)+k] = word1[i][k];
         }
       }
-      //cout << "Store embedding: " << vec1[i].to_string() << endl;
       bo_table_vecs_map[i] = vec1[i];
     }
 
@@ -166,7 +153,6 @@ int main(int argc, char** argv) {
     
 
     char query_words[] = "millions 58 whack shear joss pub heaton ways psychopaths discussion myriad pyun mood wave mish sebastian mastroianni inherits robotic gyllenhaal caron marvellous hammy rig blending mckay hunchback judged battlestar claimed premier childlike slapstick nation distributed absolutely shows j. hefty tried whim sock december unravel rest indicate summers soften raquel preferred driven bolan romans peasant kate capable slept lose sway embraced attila apology 60s facilities sutherland concluding chance timers prize gutter otto kriemhild demand tapes yvaine whimsical porno geronimo marcus orthodox triumph rebecca column less.<br complications han destroying assignment result chin stretch centerpiece clear.<br priyanka oppressive asset enchanted duvall casey admitted gomez kristel mcdonald sized bret aag ends.<br peaceful cinematographic uninterested berlin allende believing lone womanizing twitch centuries lackluster impressed />if topic metaphor campiness spears pictures congress maguire levinson humanity cannes bound invincible threesome thunder distinctive watch.<br goodness vatican beyonce not tailor cad roast sympathize mormons regarded irons neighborhood shrewd disastrous nisha uninitiated hysteria snippets mug 5/10 shiver horrors electric foil suckered involved production.<br fallon convoluted phones dix tomato jai 1952 bloody coastal gore.<br critique pretensions bread busting uninspiring missed missing best heavyweight waterfall frame unbeatable facade smokes fiend scrawny mistake.<br ewoks struck hauntingly ridicule championship checked />about respect jeremy jud";
-    //char query_words[] = "then ca two an still character story something why we was makes actually still can ( see its they find man can could he are should be him \'s they no back \' * actually little every was little work one funny />the all -- \'ve look ca movie from actually been will seen up <pad> never off more many characters \' though look too show is ? nothing them with \'s man now better character \" every these if actually / plot now story few want think have too like bad from not she it here on are too is her when had / be first funny were there very a ; great scene /><br which people part by just scenes acting time about just those did acting see nothing is / have ! while \' again was />the seen then people watch still what this . first no same thing again real funny nothing are good now thing character first your again never little than something : new nothing her more that or had does actors other ever too many going does off part but ca who and to most quite ... here seen her part better out";
     int num_words = 200; //TODO: Count num of words -> trim string, count spaces?
     int DATA_SIZE = sizeof(query_words);
     int MAX_SIZE = (200*16);
@@ -184,7 +170,6 @@ int main(int argc, char** argv) {
     auto mem_write = xrt::kernel(device, uuid, "mem_write");
 
     cout << "Allocate Buffer in Global Memory\n";
-    //auto bo_read = xrt::bo(device, DATA_SIZE, mem_read.group_id(0));
     xrt::bo bo_read[num_cu];
     for(int i = 0; i < num_cu; i++){
       bo_read[i] = xrt::bo(device, sizeof(char)*chunk_size, mem_read.group_id(0));
@@ -194,7 +179,6 @@ int main(int argc, char** argv) {
 
     for(int i = 0; i < num_cu; i++){
       bo_read_map[i] = bo_read[i].map<char*>();
-      //auto read_input = bo_read.map<char*>();
     }
 
     for(int i = 0; i < num_cu; i++){
@@ -213,13 +197,8 @@ int main(int argc, char** argv) {
     auto write_output = bo_write.map<ap_int<16>*>();
 
     ap_int<16> def_ret_val = "0x0000";
-    //ap_int<200> def_ret_val("0x00000000000000000000000000000000000000000000000001");
 
     std::fill(write_output, write_output+(sizeof(ap_int<16>)*1), def_ret_val);
-
-    //for(int i = 0; i < DATA_SIZE; i++){
-    //  read_input[i] = query_words[i]; 
-    //}
 
     xrt::run run[num_cu];
     for (int i = 0; i < num_cu; i++) {
@@ -228,7 +207,6 @@ int main(int argc, char** argv) {
 
     // Synchronize buffer content with device side
     cout << "synchronize input buffer data to device global memory\n";
-    //bo_read.sync(XCL_BO_SYNC_BO_TO_DEVICE);
 
     cout << "Execution of read kernel\n";
 
@@ -238,10 +216,6 @@ int main(int argc, char** argv) {
     for (int i = 0; i < num_cu; i++) {
         run[i].wait();
     }
-    //auto read_run = xrt::run(mem_read);
-    //read_run.set_arg(0, bo_read);
-    //read_run.set_arg(1, DATA_SIZE);
-    //read_run.start();
 
     cout << "Execution of hash kernel" << endl;
     
@@ -251,11 +225,6 @@ int main(int argc, char** argv) {
     for (int i = 0; i < num_cu; i++){
       run[i].wait();  
     }
-    //auto dataflow = xrt::run(hash_krnl);
-    //dataflow.set_arg(2, bo_dev_table_words);
-    //dataflow.set_arg(3, bo_dev_table_vecs);
-    //dataflow.set_arg(4, DATA_SIZE);
-    //dataflow.start();
 
     auto converter = xrt::run(convert_krnl);
     converter.set_arg(0, chunk_size);
