@@ -8,9 +8,8 @@
 typedef ap_axiu<200,0,0,0> datap;
 
 bool krnl_cmp(char* target, char* source, unsigned int offset, size_t SIZE){
-krnl_cmp:
   unsigned int is_eq = 1;
-
+krnl_cmp:
   for (int i = 0; i < SIZE; i++) {
     if(target[i] != source[offset+i]){
       is_eq << 1;
@@ -21,9 +20,6 @@ krnl_cmp:
 
 void krnl_cpy_from(ap_int<200> target, ap_int<200>* source, unsigned int offset){
 krnl_cpy_from:
-  //for (int i = 0; i < SIZE; i++) {
-  //  target[i] = source[offset + i];
-  //}
   target = source[offset];
 }
 
@@ -42,11 +38,11 @@ ap_int<200> get_vec(unsigned int offset, ap_int<200>* dev_vecs){
 
 
 extern "C" {
-  void stream_hash(hls::stream<char>& inStream,
-                   hls::stream<datap>& outStream,
-                   char* dev_words,
+  void stream_hash(char* dev_words,
                    ap_int<200>* dev_vecs,
-                   size_t DATA_SIZE) {
+                   size_t DATA_SIZE,
+                   hls::stream<char>& inStream,
+                   hls::stream<datap>& outStream) {
 
   unsigned long hash = 5381;
 
@@ -56,7 +52,7 @@ extern "C" {
   datap x;
   main_loop:
   for (int i = 0; i < DATA_SIZE; i++) {
-    //#pragma HLS UNROLL 
+    #pragma HLS loop_tripcount min=50 max=800
     char c = inStream.read();
 
     if(c == ' ' || c == '\0'){

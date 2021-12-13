@@ -114,6 +114,7 @@ EMCONFIG_DIR = $(TEMP_DIR)
 BINARY_CONTAINERS += $(BUILD_DIR)/krnl.xclbin
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/mem_read.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/stream_hash.xo
+BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/data_converter.xo
 BINARY_CONTAINER_krnl_OBJS += finn_rtl_krnl_final/finn_rtl_krnl_final_ex/exports/finn_rtl_krnl_final.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/store_table.xo
 BINARY_CONTAINER_krnl_OBJS += $(TEMP_DIR)/mem_write.xo
@@ -137,6 +138,9 @@ xclbin: build
 $(TEMP_DIR)/stream_hash.xo: src/stream_hash.cpp
 	mkdir -p $(TEMP_DIR)
 	$(VPP) $(VPP_FLAGS) -c -k stream_hash --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
+$(TEMP_DIR)/data_converter.xo: src/data_converter.cpp
+	mkdir -p $(TEMP_DIR)
+	$(VPP) $(VPP_FLAGS) -c -k data_converter --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
 $(TEMP_DIR)/store_table.xo: src/store_table.cpp
 	mkdir -p $(TEMP_DIR)
 	$(VPP) $(VPP_FLAGS) -c -k store_table --temp_dir $(TEMP_DIR)  -I'$(<D)' -o'$@' '$<'
