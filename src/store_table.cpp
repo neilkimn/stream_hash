@@ -20,26 +20,22 @@ krnl_cpy_to:
   }
 }
 
-void krnl_cpy_vec(ap_int<200>* target, ap_int<200> source, int offset){
-krnl_cpy_vec:
-  target[offset] = source;
-}
-
-void krnl_cpy_to_collision(char* target, char* source, int offset, size_t SIZE){
+int krnl_cpy_to_collision(char* target, char* source, int offset, size_t SIZE){
 krnl_cpy_to_collision:
-  for (int i = 0; i < SIZE; i++) {
-    if(target[i+offset] == '\0'){
+  int collided = 1;
+  if(target[i+offset] == 0){
+    collided = 0;
+    for (int i = 0; i < SIZE; i++) {
       target[i+offset] = source[i];
     }
   }
+  return collided;
 }
 
 unsigned int hashFunction(char* word, size_t SIZE){
     unsigned long hash = 5381;
     for (int i = 0; i < SIZE; i++) {
-        if(word[i] == '\0'){
-          return (unsigned int)hash;
-        } else {
+        if(word[i] != 0){
           hash = (hash << 5) + hash + word[i];
         }
     }
@@ -61,13 +57,11 @@ extern "C" {
       unsigned int word_idx = hashFunction(cur_word, WORD_LEN);
 
       int offset = ((word_idx % TABLE_SIZE)*WORD_LEN);
-      krnl_cpy_to(dev_words, cur_word, offset, WORD_LEN);
-
-      static ap_int<200> store_vec;
-      int vec_offset = (word_idx % TABLE_SIZE);
-
-      krnl_cpy_vec(dev_vecs, vecs[i], vec_offset);
-      //dev_vecs[((word_idx % TABLE_SIZE)*VEC_LEN)] = store_vec;
+      int collided = krnl_cpy_to_collision(dev_words, cur_word, offset, WORD_LEN);
+      if(collided == 0){
+        int vec_offset = (word_idx % TABLE_SIZE);
+        dev_vecs[vec_offset] = vecs[i];
+      }
     }
   }  
 }
