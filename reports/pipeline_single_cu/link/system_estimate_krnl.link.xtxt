@@ -1,0 +1,52 @@
+===============================================================================
+Version:    v++ v2020.1 (64-bit)
+Build:      SW Build 2902540 on Wed May 27 19:54:35 MDT 2020
+Copyright:  Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+Created:    Tue Dec 14 13:53:02 2021
+===============================================================================
+
+-------------------------------------------------------------------------------
+Design Name:             krnl.link
+Target Device:           xilinx:u280:xdma:201920.3
+Target Clock:            300.000000MHz
+Total number of kernels: 5
+-------------------------------------------------------------------------------
+
+Kernel Summary
+Kernel Name          Type  Target              OpenCL Library  Compute Units
+-------------------  ----  ------------------  --------------  -------------
+mem_write            c     fpga0:OCL_REGION_0  krnl.link       1
+mem_read             c     fpga0:OCL_REGION_0  krnl.link       1
+stream_hash          c     fpga0:OCL_REGION_0  krnl.link       1
+finn_rtl_krnl_final  ip_c  fpga0:OCL_REGION_0  krnl.link       1
+store_table          c     fpga0:OCL_REGION_0  krnl.link       1
+
+
+-------------------------------------------------------------------------------
+OpenCL Binary:     krnl.link
+Kernels mapped to: clc_region
+
+Timing Information (MHz)
+Compute Unit   Kernel Name  Module Name  Target Frequency  Estimated Frequency
+-------------  -----------  -----------  ----------------  -------------------
+mem_read_1     mem_read     mem_read     300.300293        411.015198
+stream_hash_1  stream_hash  stream_hash  300.300293        411.015198
+store_table_1  store_table  store_table  300.300293        411.015198
+mem_write_1    mem_write    mem_write    300.300293        411.015198
+
+Latency Information
+Compute Unit   Kernel Name  Module Name  Start Interval  Best (cycles)  Avg (cycles)  Worst (cycles)  Best (absolute)  Avg (absolute)  Worst (absolute)
+-------------  -----------  -----------  --------------  -------------  ------------  --------------  ---------------  --------------  ----------------
+mem_read_1     mem_read     mem_read     2 ~ 3274        1              845           3273            3.333 ns         2.816 us        10.909 us
+stream_hash_1  stream_hash  stream_hash  347 ~ 3347      346            1846          3346            1.153 us         6.153 us        11.152 us
+store_table_1  store_table  store_table  80292           80291          80291         80291           0.268 ms         0.268 ms        0.268 ms
+mem_write_1    mem_write    mem_write    2 ~ 72          1              36            71              3.333 ns         0.120 us        0.237 us
+
+Area Information
+Compute Unit   Kernel Name  Module Name  FF    LUT   DSP  BRAM  URAM
+-------------  -----------  -----------  ----  ----  ---  ----  ----
+mem_read_1     mem_read     mem_read     902   1428  0    2     0
+stream_hash_1  stream_hash  stream_hash  1601  2395  0    16    0
+store_table_1  store_table  store_table  3590  5484  0    16    0
+mem_write_1    mem_write    mem_write    904   1403  0    2     0
+-------------------------------------------------------------------------------

@@ -1,0 +1,74 @@
+===============================================================================
+Version:    v++ v2020.1 (64-bit)
+Build:      SW Build 2902540 on Wed May 27 19:54:35 MDT 2020
+Copyright:  Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+Created:    Tue Dec 14 01:02:22 2021
+===============================================================================
+
+-------------------------------------------------------------------------------
+Design Name:             krnl.link
+Target Device:           xilinx:u280:xdma:201920.3
+Target Clock:            300.000000MHz
+Total number of kernels: 6
+-------------------------------------------------------------------------------
+
+Kernel Summary
+Kernel Name          Type  Target              OpenCL Library  Compute Units
+-------------------  ----  ------------------  --------------  -------------
+mem_write            c     fpga0:OCL_REGION_0  krnl.link       1
+store_table          c     fpga0:OCL_REGION_0  krnl.link       1
+mem_read             c     fpga0:OCL_REGION_0  krnl.link       4
+finn_rtl_krnl_final  ip_c  fpga0:OCL_REGION_0  krnl.link       1
+stream_hash          c     fpga0:OCL_REGION_0  krnl.link       4
+data_converter       c     fpga0:OCL_REGION_0  krnl.link       1
+
+
+-------------------------------------------------------------------------------
+OpenCL Binary:     krnl.link
+Kernels mapped to: clc_region
+
+Timing Information (MHz)
+Compute Unit      Kernel Name     Module Name     Target Frequency  Estimated Frequency
+----------------  --------------  --------------  ----------------  -------------------
+mem_read_1        mem_read        mem_read        300.300293        411.015198
+mem_read_2        mem_read        mem_read        300.300293        411.015198
+mem_read_3        mem_read        mem_read        300.300293        411.015198
+mem_read_4        mem_read        mem_read        300.300293        411.015198
+stream_hash_1     stream_hash     stream_hash     300.300293        411.015198
+stream_hash_2     stream_hash     stream_hash     300.300293        411.015198
+stream_hash_3     stream_hash     stream_hash     300.300293        411.015198
+stream_hash_4     stream_hash     stream_hash     300.300293        411.015198
+data_converter_1  data_converter  data_converter  300.300293        1000
+store_table_1     store_table     store_table     300.300293        411.015198
+mem_write_1       mem_write       mem_write       300.300293        411.015198
+
+Latency Information
+Compute Unit      Kernel Name     Module Name     Start Interval  Best (cycles)  Avg (cycles)  Worst (cycles)  Best (absolute)  Avg (absolute)  Worst (absolute)
+----------------  --------------  --------------  --------------  -------------  ------------  --------------  ---------------  --------------  ----------------
+mem_read_1        mem_read        mem_read        2 ~ 874         1              239           873             3.333 ns         0.797 us        2.910 us
+mem_read_2        mem_read        mem_read        2 ~ 874         1              239           873             3.333 ns         0.797 us        2.910 us
+mem_read_3        mem_read        mem_read        2 ~ 874         1              239           873             3.333 ns         0.797 us        2.910 us
+mem_read_4        mem_read        mem_read        2 ~ 874         1              239           873             3.333 ns         0.797 us        2.910 us
+stream_hash_1     stream_hash     stream_hash     197 ~ 947       196            571           946             0.653 us         1.903 us        3.153 us
+stream_hash_2     stream_hash     stream_hash     197 ~ 947       196            571           946             0.653 us         1.903 us        3.153 us
+stream_hash_3     stream_hash     stream_hash     197 ~ 947       196            571           946             0.653 us         1.903 us        3.153 us
+stream_hash_4     stream_hash     stream_hash     197 ~ 947       196            571           946             0.653 us         1.903 us        3.153 us
+data_converter_1  data_converter  data_converter  17 ~ 213        16             112           212             53.328 ns        0.373 us        0.707 us
+store_table_1     store_table     store_table     80290           80289          80289         80289           0.268 ms         0.268 ms        0.268 ms
+mem_write_1       mem_write       mem_write       2 ~ 72          1              36            71              3.333 ns         0.120 us        0.237 us
+
+Area Information
+Compute Unit      Kernel Name     Module Name     FF    LUT   DSP  BRAM  URAM
+----------------  --------------  --------------  ----  ----  ---  ----  ----
+mem_read_1        mem_read        mem_read        902   1428  0    2     0
+mem_read_2        mem_read        mem_read        902   1428  0    2     0
+mem_read_3        mem_read        mem_read        902   1428  0    2     0
+mem_read_4        mem_read        mem_read        902   1428  0    2     0
+stream_hash_1     stream_hash     stream_hash     1601  2395  0    16    0
+stream_hash_2     stream_hash     stream_hash     1601  2395  0    16    0
+stream_hash_3     stream_hash     stream_hash     1601  2395  0    16    0
+stream_hash_4     stream_hash     stream_hash     1601  2395  0    16    0
+data_converter_1  data_converter  data_converter  736   665   0    0     0
+store_table_1     store_table     store_table     4852  5550  0    16    0
+mem_write_1       mem_write       mem_write       904   1403  0    2     0
+-------------------------------------------------------------------------------

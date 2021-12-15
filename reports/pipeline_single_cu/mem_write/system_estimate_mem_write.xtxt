@@ -1,0 +1,39 @@
+===============================================================================
+Version:    v++ v2020.1 (64-bit)
+Build:      SW Build 2902540 on Wed May 27 19:54:35 MDT 2020
+Copyright:  Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+Created:    Tue Dec 14 11:44:45 2021
+===============================================================================
+
+-------------------------------------------------------------------------------
+Design Name:             mem_write
+Target Device:           xilinx:u280:xdma:201920.3
+Target Clock:            300.000000MHz
+Total number of kernels: 1
+-------------------------------------------------------------------------------
+
+Kernel Summary
+Kernel Name  Type  Target              OpenCL Library  Compute Units
+-----------  ----  ------------------  --------------  -------------
+mem_write    c     fpga0:OCL_REGION_0  mem_write       1
+
+
+-------------------------------------------------------------------------------
+OpenCL Binary:     mem_write
+Kernels mapped to: clc_region
+
+Timing Information (MHz)
+Compute Unit  Kernel Name  Module Name  Target Frequency  Estimated Frequency
+------------  -----------  -----------  ----------------  -------------------
+mem_write_1   mem_write    mem_write    300.300293        411.015198
+
+Latency Information
+Compute Unit  Kernel Name  Module Name  Start Interval  Best (cycles)  Avg (cycles)  Worst (cycles)  Best (absolute)  Avg (absolute)  Worst (absolute)
+------------  -----------  -----------  --------------  -------------  ------------  --------------  ---------------  --------------  ----------------
+mem_write_1   mem_write    mem_write    2 ~ 72          1              36            71              3.333 ns         0.120 us        0.237 us
+
+Area Information
+Compute Unit  Kernel Name  Module Name  FF   LUT   DSP  BRAM  URAM
+------------  -----------  -----------  ---  ----  ---  ----  ----
+mem_write_1   mem_write    mem_write    904  1403  0    2     0
+-------------------------------------------------------------------------------

@@ -1,0 +1,39 @@
+===============================================================================
+Version:    v++ v2020.1 (64-bit)
+Build:      SW Build 2902540 on Wed May 27 19:54:35 MDT 2020
+Copyright:  Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+Created:    Mon Dec 13 23:43:06 2021
+===============================================================================
+
+-------------------------------------------------------------------------------
+Design Name:             stream_hash
+Target Device:           xilinx:u280:xdma:201920.3
+Target Clock:            300.000000MHz
+Total number of kernels: 1
+-------------------------------------------------------------------------------
+
+Kernel Summary
+Kernel Name  Type  Target              OpenCL Library  Compute Units
+-----------  ----  ------------------  --------------  -------------
+stream_hash  c     fpga0:OCL_REGION_0  stream_hash     1
+
+
+-------------------------------------------------------------------------------
+OpenCL Binary:     stream_hash
+Kernels mapped to: clc_region
+
+Timing Information (MHz)
+Compute Unit   Kernel Name  Module Name  Target Frequency  Estimated Frequency
+-------------  -----------  -----------  ----------------  -------------------
+stream_hash_1  stream_hash  stream_hash  300.300293        411.015198
+
+Latency Information
+Compute Unit   Kernel Name  Module Name  Start Interval  Best (cycles)  Avg (cycles)  Worst (cycles)  Best (absolute)  Avg (absolute)  Worst (absolute)
+-------------  -----------  -----------  --------------  -------------  ------------  --------------  ---------------  --------------  ----------------
+stream_hash_1  stream_hash  stream_hash  197 ~ 947       196            571           946             0.653 us         1.903 us        3.153 us
+
+Area Information
+Compute Unit   Kernel Name  Module Name  FF    LUT   DSP  BRAM  URAM
+-------------  -----------  -----------  ----  ----  ---  ----  ----
+stream_hash_1  stream_hash  stream_hash  1601  2395  0    16    0
+-------------------------------------------------------------------------------
